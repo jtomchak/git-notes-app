@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Link, Route, Switch, withRouter } from "react-router-dom";
+import { Link, withRouter } from "react-router-dom";
 import { Navbar, Nav, NavItem } from "react-bootstrap";
 
 import Routes from "./Routes";
