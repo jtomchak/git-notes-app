@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Link, Route, Switch } from "react-router-dom";
-import { Navbar, Nav } from "react-bootstrap";
+import { Navbar, Nav, NavItem } from "react-bootstrap";
 
 import Routes from "./Routes";
 import RouteNavItem from "./components/RouteNavItem";
@@ -10,8 +10,15 @@ class App extends Component {
   state = {
     isAuthenticated: false
   };
+
+  //successful login
   userHasAuthenticated = authenticated => {
     this.setState({ isAuthenticated: authenticated });
+  };
+
+  //log user out
+  handleLogout = event => {
+    this.userHasAuthenticated(false);
   };
   render() {
     const childProps = {
@@ -29,8 +36,19 @@ class App extends Component {
           </Navbar.Header>
           <Navbar.Collapse>
             <Nav pullRight>
-              <RouteNavItem href="/signup">Signup</RouteNavItem>
-              <RouteNavItem href="/login">Login</RouteNavItem>
+              {this.state.isAuthenticated ? (
+                <NavItem onClick={this.handleLogout}>Logout</NavItem>
+              ) : (
+                [
+                  <RouteNavItem key={1} href="/signup">
+                    {" "}
+                    Signup
+                  </RouteNavItem>,
+                  <RouteNavItem key={2} href="/login">
+                    Login{" "}
+                  </RouteNavItem>
+                ]
+              )}
             </Nav>
           </Navbar.Collapse>
         </Navbar>
