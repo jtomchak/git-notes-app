@@ -61,11 +61,10 @@ class App extends Component {
                 ) : (
                   [
                     <RouteNavItem key={1} href="/signup">
-                      {" "}
                       Signup
                     </RouteNavItem>,
                     <RouteNavItem key={2} href="/login">
-                      Login{" "}
+                      Login
                     </RouteNavItem>
                   ]
                 )}
