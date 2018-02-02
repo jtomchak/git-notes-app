@@ -1,4 +1,7 @@
 export default {
+  s3: {
+    BUCKET: "jtnotes-app-upload"
+  },
   MAX_ATTACHMENT_SIZE: 5000000,
   apiGateway: {
     URL: "https://7es1qmxwrh.execute-api.us-west-2.amazonaws.com/prod",
