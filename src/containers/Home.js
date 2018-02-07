@@ -62,8 +62,8 @@ export default class Home extends Component {
   renderLander() {
     return (
       <div className="lander">
-        <h1>Scratch</h1>
-        <p>A simple note taking app</p>
+        <h1>Meow Notes</h1>
+        <p>A simple meow taking app</p>
       </div>
     );
   }

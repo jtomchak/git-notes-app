@@ -50,7 +50,7 @@ class App extends Component {
           <Navbar fluid collapseOnSelect>
             <Navbar.Header>
               <Navbar.Brand>
-                <Link to="/">Git Notes</Link>
+                <Link to="/">Meow Notes</Link>
               </Navbar.Brand>
               <Navbar.Toggle />
             </Navbar.Header>

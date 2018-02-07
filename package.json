@@ -5,6 +5,7 @@
   "dependencies": {
     "amazon-cognito-identity-js": "^1.31.0",
     "aws-sdk": "^2.176.0",
+    "bootstrap": "^3.3.7",
     "crypto-js": "^3.1.9-1",
     "react": "^16.2.0",
     "react-bootstrap": "^0.32.1",
@@ -16,6 +17,10 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "aws s3 sync build/ s3://gitnotes-app-client",
+    "postdeploy":
+      "aws cloudfront create-invalidation --distribution-id E1QFLY3Q2ZZYIQ --paths \"/*\""
   }
 }
