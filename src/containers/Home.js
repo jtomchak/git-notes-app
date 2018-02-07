@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import { PageHeader, ListGroup, ListGroupItem } from "react-bootstrap";
 import { invokeApig } from "../libs/awsLib";
+import Elm from "../libs/react-elm-components";
+import { Lander } from "../elm/Lander";
 import "./Home.css";
 
 export default class Home extends Component {
@@ -60,12 +62,7 @@ export default class Home extends Component {
   };
 
   renderLander() {
-    return (
-      <div className="lander">
-        <h1>Meow Notes</h1>
-        <p>A simple meow taking app</p>
-      </div>
-    );
+    return <Elm src={Lander} />;
   }
 
   renderNotes() {
