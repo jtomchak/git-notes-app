@@ -6,6 +6,7 @@ export default class extends Component {
     return false;
   }
 
+  //uses the ref callback in React to get the node in order to embed the Elm
   initialize = node => {
     if (node === null) return;
     const app = this.props.src.embed(node, this.props.flags);
