@@ -3,6 +3,7 @@ import { PageHeader, ListGroup, ListGroupItem } from "react-bootstrap";
 import { invokeApig } from "../libs/awsLib";
 import Elm from "../libs/react-elm-components";
 import { Lander } from "../elm/Lander";
+import { ElmHome } from "../elm/Home";
 import "./Home.css";
 
 export default class Home extends Component {
@@ -16,19 +17,16 @@ export default class Home extends Component {
   }
 
   async componentDidMount() {
-    if (!this.props.isAuthenticated) {
-      return;
-    }
-    try {
-      const results = await this.notes();
-      this.setState({ notes: results });
-    } catch (e) {
-      alert(e);
-    }
-    this.setState({ isLoading: false });
-  }
-  notes() {
-    return invokeApig({ path: "/notes" });
+    // if (!this.props.isAuthenticated) {
+    //   return;
+    // }
+    // try {
+    //   const results = await this.notes();
+    //   this.setState({ notes: results });
+    // } catch (e) {
+    //   alert(e);
+    // }
+    // this.setState({ isLoading: false });
   }
 
   renderNotesList(notes) {
@@ -65,6 +63,23 @@ export default class Home extends Component {
     return <Elm src={Lander} />;
   }
 
+  notes() {
+    return invokeApig({ path: "/notes", queryParams: { limit: 5 } });
+  }
+
+  //init setup for ports
+  setupPorts(ports) {
+    ports.fetchNotes.subscribe(path => {
+      invokeApig({ path: path, queryParams: { limit: 5 } })
+        .then(results => ports.notesLoaded.send(results))
+        .catch(e => console.log(e));
+    });
+  }
+
+  renderElm() {
+    return <Elm src={ElmHome} ports={this.setupPorts} />;
+  }
+
   renderNotes() {
     return (
       <div className="notes">
@@ -79,7 +94,7 @@ export default class Home extends Component {
   render() {
     return (
       <div className="Home">
-        {this.props.isAuthenticated ? this.renderNotes() : this.renderLander()}
+        {this.props.isAuthenticated ? this.renderElm() : this.renderLander()}
       </div>
     );
   }
