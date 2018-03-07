@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { PageHeader, ListGroup, ListGroupItem } from "react-bootstrap";
+import { ListGroupItem } from "react-bootstrap";
 import { invokeApig } from "../libs/awsLib";
 import Elm from "../libs/react-elm-components";
 import { Lander } from "../elm/Lander";
@@ -11,8 +11,7 @@ export default class Home extends Component {
     super(props);
 
     this.state = {
-      isLoading: true,
-      notes: []
+      isLoading: true
     };
   }
 
@@ -42,59 +41,35 @@ export default class Home extends Component {
             {"Created: " + new Date(note.createdAt).toLocaleString()}
           </ListGroupItem>
         ) : (
-          <ListGroupItem
-            key="new"
-            href="/notes/new"
-            onClick={this.handleNoteClick}
-          >
+          <ListGroupItem key="new" href="/notes/new" onClick={this.handleNoteClick}>
             <h4>
-              <b>{"\uFF0B"}</b> Create a new note{" "}
+              <b>{"\uFF0B"}</b> Create a new note
             </h4>
           </ListGroupItem>
         )
     );
   }
-  handleNoteClick = event => {
-    event.preventDefault();
-    this.props.history.push(event.currentTarget.getAttribute("href"));
-  };
-
-  renderLander() {
-    return <Elm src={Lander} />;
-  }
-
-  notes() {
-    return invokeApig({ path: "/notes", queryParams: { limit: 5 } });
-  }
 
   //init setup for ports
-  setupPorts(ports) {
+  setupPorts = ports => {
     ports.fetchNotes.subscribe(path => {
       invokeApig({ path: path, queryParams: { limit: 5 } })
         .then(results => ports.notesLoaded.send(results))
         .catch(e => console.log(e));
     });
-  }
-
-  renderElm() {
-    return <Elm src={ElmHome} ports={this.setupPorts} />;
-  }
-
-  renderNotes() {
-    return (
-      <div className="notes">
-        <PageHeader>Your Notes</PageHeader>
-        <ListGroup>
-          {!this.state.isLoading && this.renderNotesList(this.state.notes)}
-        </ListGroup>
-      </div>
-    );
-  }
+    ports.routeTo.subscribe(url => {
+      this.props.history.push(url);
+    });
+  };
 
   render() {
     return (
       <div className="Home">
-        {this.props.isAuthenticated ? this.renderElm() : this.renderLander()}
+        {this.props.isAuthenticated ? (
+          <Elm src={ElmHome} ports={this.setupPorts} />
+        ) : (
+          <Elm src={Lander} />
+        )}
       </div>
     );
   }

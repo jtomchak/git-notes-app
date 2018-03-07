@@ -3,16 +3,13 @@ port module ElmHome exposing (..)
 import Http
 import Date exposing (..)
 import Html exposing (Html, text, div, h1, img, li, ul)
+import Html.Events exposing (onClick)
 import Html.Attributes exposing (src, class)
 import Bootstrap.ListGroup as Listgroup
 import Json.Decode exposing (..)
 
 
 ---- MODEL ----
-
-
-type alias Notes =
-    List Note
 
 
 type alias Note =
@@ -23,7 +20,7 @@ type alias Note =
 
 
 type alias Model =
-    { notes : Notes
+    { notes : List Note
     }
 
 
@@ -42,7 +39,8 @@ init =
 
 
 type Msg
-    = NotesLoaded (Result String Notes)
+    = NotesLoaded (Result String (List Note))
+    | SetRoute String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -53,6 +51,9 @@ update msg model =
 
         NotesLoaded (Err fail) ->
             ( model, Cmd.none )
+
+        SetRoute url ->
+            ( model, routeTo url )
 
 
 
@@ -89,6 +90,9 @@ noteListDecoder =
 port fetchNotes : String -> Cmd msg
 
 
+port routeTo : String -> Cmd msg
+
+
 
 ---- VIEW ----
 -- (map (\l -> li [] [ text l ]) lst)
@@ -97,18 +101,30 @@ port fetchNotes : String -> Cmd msg
 view : Model -> Html Msg
 view model =
     div []
-        [ h1 [] [ text "Your Elm App is working!" ]
+        [ h1 [] [ text "Our Elm App is working!" ]
         , renderNotes model.notes
         ]
 
 
-renderNotes : Notes -> Html Msg
+renderNotes : List Note -> Html Msg
 renderNotes notes =
     let
         noteItems =
-            List.map (\n -> Listgroup.li [] [ text n.content ]) notes
+            List.map
+                (\n ->
+                    Listgroup.button
+                        [ Listgroup.attrs <| [ onClick (SetRoute ("/notes/" ++ n.noteId)) ]
+                        ]
+                        [ text (noteTitle n.content) ]
+                )
+                (List.append [ { content = "Create a New Note", createdAt = 0, noteId = "new" } ] notes)
     in
-        Listgroup.ul noteItems
+        Listgroup.custom noteItems
+
+
+noteTitle : String -> String
+noteTitle content =
+    Maybe.withDefault "Note Title" (List.head (String.lines content))
 
 
 
