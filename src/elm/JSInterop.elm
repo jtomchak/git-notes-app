@@ -21,7 +21,7 @@ receiveData tagger onError =
         (\info ->
             case info.tag of
                 "NotesLoaded" ->
-                    tagger <| (NotesLoaded (decodeValue noteListDecoder info.data))
+                    tagger <| NotesLoaded <| decodeValue noteListDecoder info.data
 
                 _ ->
                     onError <| "Unexpected info from outside: " ++ toString info
