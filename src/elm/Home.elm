@@ -2,11 +2,13 @@ port module ElmHome exposing (..)
 
 import Http
 import Date exposing (..)
+import Note exposing (Note)
 import Html exposing (Html, text, div, h1, img, li, ul, p)
 import Html.Events exposing (onClick)
 import Html.Attributes exposing (src, class)
 import Bootstrap.ListGroup as Listgroup
 import Json.Decode exposing (..)
+import JSInterop exposing (..)
 
 
 ---- MODEL ----
@@ -33,7 +35,7 @@ init =
             , isAuthenticated = False
             }
     in
-        model ! [ fetchNotes "/notes" ]
+        model ! [ sendData (FetchNotes "/notes") ]
 
 
 
@@ -41,9 +43,8 @@ init =
 
 
 type Msg
-    = NotesLoaded (Result String (List Note))
-    | SetRoute String
-    | UpdateAuth Bool
+    = OutSide IncomingData
+    | LogErr String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -53,60 +54,32 @@ update msg model =
             Debug.log "msg" msg
     in
         case msg of
-            NotesLoaded (Ok notes) ->
-                ( { model | notes = notes }, Cmd.none )
+            OutSide incomingData ->
+                case incomingData of
+                    UpdateAuth bool ->
+                        ( { model | isAuthenticated = bool }, Cmd.none )
 
-            NotesLoaded (Err fail) ->
-                ( model, Cmd.none )
+                    NotesLoaded notes ->
+                        case notes of
+                            Ok notes ->
+                                ( { model | notes = notes }, Cmd.none )
 
-            SetRoute url ->
-                ( model, routeTo url )
+                            Err fail ->
+                                ( model, Cmd.none )
 
-            UpdateAuth bool ->
-                ( { model | isAuthenticated = bool }, Cmd.none )
+            LogErr err ->
+                model ! [ sendData (LogError err) ]
 
 
 
 -- Commands --
--- Ports --
--- IN --
-
-
-port notesLoaded : (Value -> msg) -> Sub msg
-
-
-port isAuthenticated : (Bool -> msg) -> Sub msg
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
-        [ notesLoaded ((decodeValue noteListDecoder >> NotesLoaded))
-        , isAuthenticated UpdateAuth
+        [ receiveData OutSide LogErr
         ]
-
-
-noteDecoder : Decoder Note
-noteDecoder =
-    map3 Note
-        (field "content" string)
-        (field "createdAt" int)
-        (field "noteId" string)
-
-
-noteListDecoder : Decoder (List Note)
-noteListDecoder =
-    list noteDecoder
-
-
-
--- OUT --
-
-
-port fetchNotes : String -> Cmd msg
-
-
-port routeTo : String -> Cmd msg
 
 
 
@@ -134,7 +107,7 @@ renderNotes notes =
             List.map
                 (\n ->
                     Listgroup.button
-                        [ Listgroup.attrs <| [ onClick (SetRoute ("/notes/" ++ n.noteId)) ]
+                        [ Listgroup.attrs <| []
                         ]
                         [ text (noteTitle n.content) ]
                 )
