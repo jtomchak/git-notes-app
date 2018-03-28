@@ -2,30 +2,22 @@ import React, { Component } from "react";
 import { ListGroupItem } from "react-bootstrap";
 import { invokeApig } from "../libs/awsLib";
 import Elm from "../libs/react-elm-components";
-import { Lander } from "../elm/Lander";
 import { ElmHome } from "../elm/Home";
 import "./Home.css";
 
 export default class Home extends Component {
-  constructor(props) {
-    super(props);
+  state = {
+    isLoading: true
+  };
 
-    this.state = {
-      isLoading: true
-    };
+  componentDidMount() {
+    this.updateAuth(this.props.isAuthenticated);
   }
 
-  async componentDidMount() {
-    // if (!this.props.isAuthenticated) {
-    //   return;
-    // }
-    // try {
-    //   const results = await this.notes();
-    //   this.setState({ notes: results });
-    // } catch (e) {
-    //   alert(e);
-    // }
-    // this.setState({ isLoading: false });
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.isAuthenticated !== this.props.isAuthenticated) {
+      this.updateAuth(nextProps.isAuthenticated);
+    }
   }
 
   renderNotesList(notes) {
@@ -60,16 +52,13 @@ export default class Home extends Component {
     ports.routeTo.subscribe(url => {
       this.props.history.push(url);
     });
+    this.updateAuth = ports.isAuthenticated.send;
   };
 
   render() {
     return (
       <div className="Home">
-        {this.props.isAuthenticated ? (
-          <Elm src={ElmHome} ports={this.setupPorts} />
-        ) : (
-          <Elm src={Lander} />
-        )}
+        <Elm src={ElmHome} ports={this.setupPorts} />
       </div>
     );
   }

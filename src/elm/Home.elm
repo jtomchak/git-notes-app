@@ -2,7 +2,7 @@ port module ElmHome exposing (..)
 
 import Http
 import Date exposing (..)
-import Html exposing (Html, text, div, h1, img, li, ul)
+import Html exposing (Html, text, div, h1, img, li, ul, p)
 import Html.Events exposing (onClick)
 import Html.Attributes exposing (src, class)
 import Bootstrap.ListGroup as Listgroup
@@ -21,6 +21,7 @@ type alias Note =
 
 type alias Model =
     { notes : List Note
+    , isAuthenticated : Bool
     }
 
 
@@ -29,6 +30,7 @@ init =
     let
         model =
             { notes = []
+            , isAuthenticated = False
             }
     in
         model ! [ fetchNotes "/notes" ]
@@ -41,19 +43,27 @@ init =
 type Msg
     = NotesLoaded (Result String (List Note))
     | SetRoute String
+    | UpdateAuth Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
-        NotesLoaded (Ok notes) ->
-            ( { model | notes = notes }, Cmd.none )
+    let
+        _ =
+            Debug.log "msg" msg
+    in
+        case msg of
+            NotesLoaded (Ok notes) ->
+                ( { model | notes = notes }, Cmd.none )
 
-        NotesLoaded (Err fail) ->
-            ( model, Cmd.none )
+            NotesLoaded (Err fail) ->
+                ( model, Cmd.none )
 
-        SetRoute url ->
-            ( model, routeTo url )
+            SetRoute url ->
+                ( model, routeTo url )
+
+            UpdateAuth bool ->
+                ( { model | isAuthenticated = bool }, Cmd.none )
 
 
 
@@ -65,9 +75,15 @@ update msg model =
 port notesLoaded : (Value -> msg) -> Sub msg
 
 
+port isAuthenticated : (Bool -> msg) -> Sub msg
+
+
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    notesLoaded ((decodeValue noteListDecoder >> NotesLoaded))
+    Sub.batch
+        [ notesLoaded ((decodeValue noteListDecoder >> NotesLoaded))
+        , isAuthenticated UpdateAuth
+        ]
 
 
 noteDecoder : Decoder Note
@@ -95,15 +111,20 @@ port routeTo : String -> Cmd msg
 
 
 ---- VIEW ----
--- (map (\l -> li [] [ text l ]) lst)
 
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ h1 [] [ text "Our Elm App is working!" ]
-        , renderNotes model.notes
-        ]
+    if model.isAuthenticated then
+        div []
+            [ h1 [] [ text "Our Elm App is working!" ]
+            , renderNotes model.notes
+            ]
+    else
+        div [ class "lander" ]
+            [ h1 [] [ text "Meow Notes" ]
+            , p [] [ text "A simple meow taking app... elm" ]
+            ]
 
 
 renderNotes : List Note -> Html Msg
@@ -117,14 +138,14 @@ renderNotes notes =
                         ]
                         [ text (noteTitle n.content) ]
                 )
-                (List.append [ { content = "Create a New Note", createdAt = 0, noteId = "new" } ] notes)
+                ({ content = "Create a New Note", createdAt = 0, noteId = "new" } :: notes)
     in
         Listgroup.custom noteItems
 
 
 noteTitle : String -> String
 noteTitle content =
-    Maybe.withDefault "Note Title" (List.head (String.lines content))
+    Maybe.withDefault "Note Title" (content |> String.lines |> List.head)
 
 
 
