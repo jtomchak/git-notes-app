@@ -1,7 +1,7 @@
 port module JSInterop exposing (..)
 
 import Note exposing (Note, noteDecoder, noteListDecoder)
-import Json.Decode exposing (..)
+import Json.Decode exposing (Decoder, decodeValue)
 import Json.Encode
 
 
@@ -22,6 +22,9 @@ receiveData tagger onError =
             case info.tag of
                 "NotesLoaded" ->
                     tagger <| NotesLoaded <| decodeValue noteListDecoder info.data
+
+                "IsAuthenticated" ->
+                    tagger <| UpdateAuth True
 
                 _ ->
                     onError <| "Unexpected info from outside: " ++ toString info
