@@ -1,7 +1,7 @@
 port module JSInterop exposing (..)
 
 import Note exposing (Note, noteDecoder, noteListDecoder)
-import Json.Decode exposing (Decoder, decodeValue)
+import Json.Decode exposing (Decoder, decodeValue, decodeString, bool)
 import Json.Encode
 
 
@@ -24,7 +24,7 @@ receiveData tagger onError =
                     tagger <| NotesLoaded <| decodeValue noteListDecoder info.data
 
                 "IsAuthenticated" ->
-                    tagger <| UpdateAuth True
+                    tagger <| UpdateAuth <| decodeValue Json.Decode.bool info.data
 
                 _ ->
                     onError <| "Unexpected info from outside: " ++ toString info
@@ -38,7 +38,7 @@ type OutgoingData
 
 type IncomingData
     = NotesLoaded (Result String (List Note))
-    | UpdateAuth Bool
+    | UpdateAuth (Result String Bool)
 
 
 type alias GenericData =

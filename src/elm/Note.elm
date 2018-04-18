@@ -21,3 +21,13 @@ type alias Note =
     , createdAt : Int
     , noteId : String
     }
+
+
+authDecoder : Decoder Bool
+authDecoder =
+    (Json.Decode.bool)
+
+
+
+-- Decode.map (\auth -> { isAuth = auth })
+--     (Decode.at [ "auth" ] Decode.bool)

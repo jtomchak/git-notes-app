@@ -56,8 +56,13 @@ update msg model =
         case msg of
             OutSide incomingData ->
                 case incomingData of
-                    UpdateAuth bool ->
-                        ( { model | isAuthenticated = bool }, Cmd.none )
+                    UpdateAuth isAuth ->
+                        case isAuth of
+                            Ok isAuth ->
+                                ( { model | isAuthenticated = isAuth }, Cmd.none )
+
+                            Err fail ->
+                                ( model, Cmd.none )
 
                     NotesLoaded notes ->
                         case notes of
