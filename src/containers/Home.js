@@ -1,6 +1,4 @@
 import React, { Component } from "react";
-import { ListGroupItem } from "react-bootstrap";
-import { invokeApig } from "../libs/awsLib";
 import Elm from "../libs/react-elm-components";
 import { sendData, initPorts } from "../libs/am-ports";
 import { ElmHome } from "../elm/Home";
