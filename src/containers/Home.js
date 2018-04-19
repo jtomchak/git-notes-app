@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import PropTypes from "prop-types";
 import Elm from "../libs/react-elm-components";
 import { sendData, initPorts } from "../libs/am-ports";
 import { ElmHome } from "../elm/Home";
@@ -22,8 +23,12 @@ export default class Home extends Component {
   render() {
     return (
       <div className="Home">
-        <Elm src={ElmHome} ports={initPorts} />
+        <Elm src={ElmHome} ports={initPorts(this.context)} />
       </div>
     );
   }
 }
+
+Home.contextTypes = {
+  router: PropTypes.object.isRequired
+};

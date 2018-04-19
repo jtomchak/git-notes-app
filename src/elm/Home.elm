@@ -44,6 +44,7 @@ init =
 
 type Msg
     = OutSide IncomingData
+    | JSRedirectTo String
     | LogErr String
 
 
@@ -71,6 +72,9 @@ update msg model =
 
                             Err fail ->
                                 ( model, Cmd.none )
+
+            JSRedirectTo route ->
+                model ! [ sendData <| RedirectTo route ]
 
             LogErr err ->
                 model ! [ sendData (LogError err) ]
@@ -112,7 +116,7 @@ renderNotes notes =
             List.map
                 (\n ->
                     Listgroup.button
-                        [ Listgroup.attrs <| []
+                        [ Listgroup.attrs <| [ onClick <| JSRedirectTo ("notes/" ++ n.noteId) ]
                         ]
                         [ text (noteTitle n.content) ]
                 )
@@ -123,7 +127,7 @@ renderNotes notes =
 
 noteTitle : String -> String
 noteTitle content =
-    Maybe.withDefault "Note Title" (content |> String.lines |> List.head)
+    content |> String.lines |> List.head |> Maybe.withDefault "Note Title"
 
 
 

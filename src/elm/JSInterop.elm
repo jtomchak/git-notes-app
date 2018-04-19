@@ -9,10 +9,13 @@ sendData : OutgoingData -> Cmd msg
 sendData info =
     case info of
         FetchNotes path ->
-            outgoingData { tag = "FetchNotes", data = Json.Encode.string path }
+            outgoingData { tag = "FETCH_NOTES", data = Json.Encode.string path }
+
+        RedirectTo route ->
+            outgoingData { tag = "REDIRECT_TO", data = Json.Encode.string route }
 
         LogError err ->
-            outgoingData { tag = "LogError", data = Json.Encode.string err }
+            outgoingData { tag = "ERROR_LOG_REQUESTED", data = Json.Encode.string err }
 
 
 receiveData : (IncomingData -> msg) -> (String -> msg) -> Sub msg
@@ -33,6 +36,7 @@ receiveData tagger onError =
 
 type OutgoingData
     = FetchNotes String
+    | RedirectTo String
     | LogError String
 
 

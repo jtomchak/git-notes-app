@@ -2,19 +2,19 @@ import { invokeApig } from "../libs/awsLib";
 
 export let sendData;
 
-export const initPorts = ports => {
+export const initPorts = context => ports => {
   ports.outgoingData.subscribe(msg => {
     switch (msg.tag) {
-      case "FetchNotes":
+      case "FETCH_NOTES":
         invokeApig({ path: "/notes", queryParams: { limit: 5 } })
           .then(results => sendData({ tag: "NotesLoaded", data: results }))
           .catch(e => console.log(e));
         break;
-      case "ErrorLogRequested":
+      case "ERROR_LOG_REQUESTED":
         console.log(msg.data);
         break;
-      case "routeTo":
-        //call props.history.push w/ url
+      case "REDIRECT_TO":
+        context.router.history.push(msg.data);
         break;
       default:
         return null;
