@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import PropTypes from "prop-types";
 import Elm from "../libs/react-elm-components";
 import { sendData, initPorts } from "../libs/am-ports";
-import { ElmHome } from "../elm/Home";
+import { Main } from "../elm/Main";
 import "./Home.css";
 
 export default class Home extends Component {
@@ -23,7 +23,7 @@ export default class Home extends Component {
   render() {
     return (
       <div className="Home">
-        <Elm src={ElmHome} ports={initPorts(this.context)} />
+        <Elm src={Main} ports={initPorts(this.context)} flags={{ route: this.props.match.url }} />
       </div>
     );
   }

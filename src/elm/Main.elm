@@ -1,4 +1,4 @@
-port module ElmHome exposing (..)
+module Main exposing (..)
 
 import Http
 import Date exposing (..)
@@ -24,15 +24,22 @@ type alias Note =
 type alias Model =
     { notes : List Note
     , isAuthenticated : Bool
+    , route : String
     }
 
 
-init : ( Model, Cmd Msg )
-init =
+type alias Flags =
+    { route : String
+    }
+
+
+init : Flags -> ( Model, Cmd Msg )
+init flags =
     let
         model =
             { notes = []
             , isAuthenticated = False
+            , route = flags.route
             }
     in
         model ! [ sendData (FetchNotes "/notes") ]
@@ -134,9 +141,9 @@ noteTitle content =
 ---- PROGRAM ----
 
 
-main : Program Never Model Msg
+main : Program Flags Model Msg
 main =
-    Html.program
+    Html.programWithFlags
         { view = view
         , init = init
         , update = update
