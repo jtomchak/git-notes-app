@@ -24,7 +24,7 @@ type alias Note =
 type alias Model =
     { notes : List Note
     , isAuthenticated : Bool
-    , route : String
+    , route : Route
     }
 
 
@@ -39,10 +39,29 @@ init flags =
         model =
             { notes = []
             , isAuthenticated = False
-            , route = flags.route
+            , route = urlToRoute flags.route
             }
     in
         model ! [ sendData (FetchNotes "/notes") ]
+
+
+type Route
+    = Home
+    | NewNote
+    | NotFound
+
+
+urlToRoute : String -> Route
+urlToRoute url =
+    case url of
+        "/" ->
+            Home
+
+        "/notes/new" ->
+            NewNote
+
+        _ ->
+            NotFound
 
 
 
@@ -104,16 +123,26 @@ subscriptions _ =
 
 view : Model -> Html Msg
 view model =
-    if model.isAuthenticated then
-        div []
-            [ h1 [] [ text "Our Elm App is working!" ]
-            , renderNotes model.notes
-            ]
-    else
-        div [ class "lander" ]
-            [ h1 [] [ text "Meow Notes" ]
-            , p [] [ text "A simple meow taking app... elm" ]
-            ]
+    case model.route of
+        Home ->
+            if model.isAuthenticated then
+                div []
+                    [ h1 [] [ text "Our Elm App is working!" ]
+                    , renderNotes model.notes
+                    ]
+            else
+                div [ class "lander" ]
+                    [ h1 [] [ text "Meow Notes" ]
+                    , p [] [ text "A simple meow taking app... elm" ]
+                    ]
+
+        NewNote ->
+            div []
+                [ h1 [] [ text "Here is where Elm note is going!" ] ]
+
+        NotFound ->
+            div []
+                [ h1 [] [ text "Nothing here meow" ] ]
 
 
 renderNotes : List Note -> Html Msg

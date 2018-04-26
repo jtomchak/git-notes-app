@@ -9,7 +9,7 @@
     },
     {}
   ],
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "src": "android-chrome-256x256.png",
   "sizes": "256x256",
