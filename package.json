@@ -20,7 +20,6 @@
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
     "deploy": "aws s3 sync build/ s3://gitnotes-app-client",
-    "postdeploy":
-      "aws cloudfront create-invalidation --distribution-id E1QFLY3Q2ZZYIQ --paths \"/*\""
+    "postdeploy": "aws cloudfront create-invalidation --distribution-id E1QFLY3Q2ZZYIQ --paths \"/*\""
   }
 }
