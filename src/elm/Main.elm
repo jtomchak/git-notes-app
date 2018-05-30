@@ -112,9 +112,8 @@ update msg model =
                         case file of
                             Ok newImageFile ->
                                 let
-                                    oldCreateNote = model.createNote
                                     newCreateNoteImage =
-                                        updateCreateNote newImageFile oldCreateNote
+                                        updateCreateNote newImageFile model.createNote
                                 in
                                  ({ model | createNote = newCreateNoteImage }, Cmd.none)
 
