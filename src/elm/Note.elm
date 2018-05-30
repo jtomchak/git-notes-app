@@ -21,3 +21,16 @@ type alias Note =
     , createdAt : Int
     , noteId : String
     }
+
+
+fileImageDecoder : Decoder Image
+fileImageDecoder =
+    map2 Image
+        (field "content" string)
+        (field "fileName" string)
+
+
+type alias Image =
+    { content : String
+    , fileName : String
+    }

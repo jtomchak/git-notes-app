@@ -1,6 +1,6 @@
 port module JSInterop exposing (..)
 
-import Note exposing (Note, noteDecoder, noteListDecoder)
+import Note exposing (Note, noteDecoder, noteListDecoder, Image, fileImageDecoder)
 import Json.Decode exposing (Decoder, decodeValue, decodeString, bool)
 import Json.Encode
 
@@ -17,17 +17,23 @@ sendData info =
         LogError err ->
             outgoingData { tag = "ERROR_LOG_REQUESTED", data = Json.Encode.string err }
 
+        FileSelected id ->
+            outgoingData { tag = "File_SELECTED", data = Json.Encode.string id }
+
 
 receiveData : (IncomingData -> msg) -> (String -> msg) -> Sub msg
 receiveData tagger onError =
     incomingData
         (\info ->
             case info.tag of
-                "NotesLoaded" ->
+                "NOTES_LOADED" ->
                     tagger <| NotesLoaded <| decodeValue noteListDecoder info.data
 
-                "IsAuthenticated" ->
+                "IS_AUTHENTICATED" ->
                     tagger <| UpdateAuth <| decodeValue Json.Decode.bool info.data
+
+                "FILE_CONTENT_READ" ->
+                    tagger <| FileReadImage <| decodeValue fileImageDecoder info.data
 
                 _ ->
                     onError <| "Unexpected info from outside: " ++ toString info
@@ -38,11 +44,13 @@ type OutgoingData
     = FetchNotes String
     | RedirectTo String
     | LogError String
+    | FileSelected String
 
 
 type IncomingData
     = NotesLoaded (Result String (List Note))
     | UpdateAuth (Result String Bool)
+    | FileReadImage (Result String Image)
 
 
 type alias GenericData =

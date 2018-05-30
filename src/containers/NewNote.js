@@ -50,7 +50,9 @@ export default class NewNote extends Component {
     this.setState({ isLoading: true });
 
     try {
-      const uploadedFilename = this.file ? (await s3Upload(this.file)).Location : null;
+      const uploadedFilename = this.file
+        ? (await s3Upload(this.file)).Location
+        : null;
       await this.createNote({
         content: this.state.content,
         attachment: uploadedFilename
@@ -73,8 +75,12 @@ export default class NewNote extends Component {
   render() {
     return (
       <div className="NewNote">
-        <Elm src={Main} ports={initPorts(this.context)} flags={{ route: this.props.match.url }} />
-        <form onSubmit={this.handleSubmit}>
+        <Elm
+          src={Main}
+          ports={initPorts(this.context)}
+          flags={{ route: this.props.match.url }}
+        />
+        {/* <form onSubmit={this.handleSubmit}>
           <FormGroup controlId="content">
             <FormControl
               onChange={this.handleChange}
@@ -96,7 +102,7 @@ export default class NewNote extends Component {
             text="Create"
             loadingText="Creating…"
           />
-        </form>
+        </form> */}
       </div>
     );
   }

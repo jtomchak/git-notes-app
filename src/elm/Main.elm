@@ -2,11 +2,15 @@ module Main exposing (..)
 
 import Http
 import Date exposing (..)
-import Note exposing (Note)
-import Html exposing (Html, text, div, h1, img, li, ul, p)
-import Html.Events exposing (onClick)
-import Html.Attributes exposing (src, class)
+import Note exposing (Note, Image)
+import Html exposing (Html, text, div, h1, img, li, ul, p, label, input)
+import Html.Events exposing (onClick, onWithOptions)
+import Html.Attributes exposing (src, class, for, type_, id, title)
 import Bootstrap.ListGroup as Listgroup
+import Bootstrap.Form as Form
+import Bootstrap.Form.Input as Input
+import Bootstrap.Form.Textarea as Textarea
+import Bootstrap.Button as Button
 import Json.Decode exposing (..)
 import JSInterop exposing (..)
 
@@ -14,10 +18,9 @@ import JSInterop exposing (..)
 ---- MODEL ----
 
 
-type alias Note =
+type alias CreateNote =
     { content : String
-    , createdAt : Int
-    , noteId : String
+    , imageFile : Maybe Image
     }
 
 
@@ -25,6 +28,7 @@ type alias Model =
     { notes : List Note
     , isAuthenticated : Bool
     , route : Route
+    , createNote : CreateNote
     }
 
 
@@ -40,6 +44,10 @@ init flags =
             { notes = []
             , isAuthenticated = False
             , route = urlToRoute flags.route
+            , createNote =
+                { content = ""
+                , imageFile = Nothing
+                }
             }
     in
         model ! [ sendData (FetchNotes "/notes") ]
@@ -72,6 +80,7 @@ type Msg
     = OutSide IncomingData
     | JSRedirectTo String
     | LogErr String
+    | SelectImageFile String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -99,13 +108,31 @@ update msg model =
                             Err fail ->
                                 ( model, Cmd.none )
 
+                    FileReadImage file ->
+                        case file of
+                            Ok newImageFile ->
+                                let
+                                    oldCreateNote = model.createNote
+                                    newCreateNoteImage =
+                                        updateCreateNote newImageFile oldCreateNote
+                                in
+                                 ({ model | createNote = newCreateNoteImage }, Cmd.none)
+
+                            Err fail ->
+                                ( model, Cmd.none )
+
             JSRedirectTo route ->
                 model ! [ sendData <| RedirectTo route ]
 
             LogErr err ->
                 model ! [ sendData (LogError err) ]
 
+            SelectImageFile id ->
+                model ! [ sendData (FileSelected id) ]
 
+updateCreateNote : Image -> CreateNote -> CreateNote
+updateCreateNote newImageFile note =
+    { note | imageFile = Just newImageFile }
 
 -- Commands --
 
@@ -138,7 +165,22 @@ view model =
 
         NewNote ->
             div []
-                [ h1 [] [ text "Here is where Elm note is going!" ] ]
+                [ h1 [] [ text "Here is where Elm note is going!" ]
+                , Form.form []
+                    [ Form.group []
+                        [ label [ for "content" ] []
+                        , Textarea.textarea
+                            [ Textarea.id "content"
+                            ]
+                        ]
+                    , Form.group []
+                        [ Form.label [ for "file" ] [ text "Attachment" ]
+                        , input [ type_ "file", id "imageFileInput" ] []
+                        ]
+                    , Button.button [ Button.primary, Button.attrs [ onWithOptions "click" { stopPropagation = True, preventDefault = True } (Json.Decode.succeed (SelectImageFile "imageFileInput")) ] ] [ text "Create" ]
+                    ]
+                , viewImagePreview model.createNote.imageFile  
+                ]
 
         NotFound ->
             div []
@@ -165,7 +207,13 @@ noteTitle : String -> String
 noteTitle content =
     content |> String.lines |> List.head |> Maybe.withDefault "Note Title"
 
-
+viewImagePreview : Maybe Image -> Html Msg
+viewImagePreview image =
+    case image of
+        Just i ->
+         img [ src i.content, title i.fileName] []
+        Nothing ->
+          text ""
 
 ---- PROGRAM ----
 

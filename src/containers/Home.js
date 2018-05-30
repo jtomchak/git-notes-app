@@ -11,19 +11,23 @@ export default class Home extends Component {
   };
 
   componentDidMount() {
-    sendData({ tag: "IsAuthenticated", data: this.props.isAuthenticated });
+    sendData({ tag: "IS_AUTHENTICATED", data: this.props.isAuthenticated });
   }
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.isAuthenticated !== this.props.isAuthenticated) {
-      sendData({ tag: "IsAuthenticated", data: this.props.isAuthenticated });
+      sendData({ tag: "IS_AUTHENTICATED", data: this.props.isAuthenticated });
     }
   }
 
   render() {
     return (
       <div className="Home">
-        <Elm src={Main} ports={initPorts(this.context)} flags={{ route: this.props.match.url }} />
+        <Elm
+          src={Main}
+          ports={initPorts(this.context)}
+          flags={{ route: this.props.match.url }}
+        />
       </div>
     );
   }
