@@ -112,10 +112,10 @@ update msg model =
                         case file of
                             Ok newImageFile ->
                                 let
-                                    newCreateNoteImage =
+                                    newCreateNote =
                                         updateCreateNote newImageFile model.createNote
                                 in
-                                 ({ model | createNote = newCreateNoteImage }, Cmd.none)
+                                 ({ model | createNote = newCreateNote }, Cmd.none)
 
                             Err fail ->
                                 ( model, Cmd.none )
