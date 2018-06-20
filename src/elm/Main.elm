@@ -4,7 +4,7 @@ import Http
 import Date exposing (..)
 import Note exposing (Note, Image)
 import Html exposing (Html, text, div, h1, img, li, ul, p, label, input)
-import Html.Events exposing (onClick, onWithOptions)
+import Html.Events exposing (onClick, onWithOptions, on)
 import Html.Attributes exposing (src, class, for, type_, id, title)
 import Bootstrap.ListGroup as Listgroup
 import Bootstrap.Form as Form
@@ -23,13 +23,31 @@ type alias CreateNote =
     , imageFile : Maybe Image
     }
 
+type alias UserData = 
+{
+    notes: List Note,
+    createNote : CreateNote
+}
+
+type Authenticated = 
+    loggin : UserData
+    | annonyous
+-- logged userData requires to be there for the user state
 
 type alias Model =
     { notes : List Note
     , isAuthenticated : Bool
     , route : Route
-    , createNote : CreateNote
+    , createNote : CreateNote,
+    -- tag for each of the states
+    -- (authtenticated, annonyous),
     }
+
+-- type alias Mode =
+{
+    authenticated : Authenticated,
+    route : Route
+}
 
 
 type alias Flags =
@@ -174,7 +192,7 @@ view model =
                         ]
                     , Form.group []
                         [ Form.label [ for "file" ] [ text "Attachment" ]
-                        , input [ type_ "file", id "imageFileInput" ] []
+                        , input [ type_ "file", id "imageFileInput", on "change"  (Json.Decode.succeed (SelectImageFile "imageFileInput"))] []
                         ]
                     , Button.button [ Button.primary, Button.attrs [ onWithOptions "click" { stopPropagation = True, preventDefault = True } (Json.Decode.succeed (SelectImageFile "imageFileInput")) ] ] [ text "Create" ]
                     ]
