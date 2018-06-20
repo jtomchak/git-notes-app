@@ -23,31 +23,34 @@ type alias CreateNote =
     , imageFile : Maybe Image
     }
 
-type alias UserData = 
-{
-    notes: List Note,
-    createNote : CreateNote
-}
 
-type Authenticated = 
-    loggin : UserData
-    | annonyous
--- logged userData requires to be there for the user state
-
-type alias Model =
+type alias UserData =
     { notes : List Note
-    , isAuthenticated : Bool
-    , route : Route
-    , createNote : CreateNote,
-    -- tag for each of the states
-    -- (authtenticated, annonyous),
+    , createNote : CreateNote
     }
 
--- type alias Mode =
-{
-    authenticated : Authenticated,
-    route : Route
-}
+
+type Authenticated
+    = Login UserData
+    | Annonyous
+
+
+
+-- logged userData requires to be there for the user state
+-- type alias Model =
+--     { notes : List Note
+--     , isAuthenticated : Bool
+--     , route : Route
+--     , createNote : CreateNote
+--     -- tag for each of the states
+--     -- (authtenticated, annonyous),
+--     }
+
+
+type alias Model =
+    { authenticated : Authenticated
+    , route : Route
+    }
 
 
 type alias Flags =
@@ -59,13 +62,8 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         model =
-            { notes = []
-            , isAuthenticated = False
+            { authenticated = Login { notes = [], createNote = { content = "", imageFile = Nothing } }
             , route = urlToRoute flags.route
-            , createNote =
-                { content = ""
-                , imageFile = Nothing
-                }
             }
     in
         model ! [ sendData (FetchNotes "/notes") ]
@@ -101,6 +99,11 @@ type Msg
     | SelectImageFile String
 
 
+
+-- case isAuth of ok true, ok false, error
+-- default user data record
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
@@ -112,8 +115,11 @@ update msg model =
                 case incomingData of
                     UpdateAuth isAuth ->
                         case isAuth of
-                            Ok isAuth ->
-                                ( { model | isAuthenticated = isAuth }, Cmd.none )
+                            Ok False ->
+                                ( { model | authenticated = Annonyous }, Cmd.none )
+
+                            Ok True ->
+                                ( { model | authenticated = Login { notes = [], createNote = { content = "", imageFile = Nothing } } }, Cmd.none )
 
                             Err fail ->
                                 ( model, Cmd.none )
@@ -121,7 +127,12 @@ update msg model =
                     NotesLoaded notes ->
                         case notes of
                             Ok notes ->
-                                ( { model | notes = notes }, Cmd.none )
+                                case model.authenticated of
+                                    Annonyous ->
+                                        ( model, Cmd.none )
+
+                                    Login userData ->
+                                        ( { model | authenticated = Login { userData | notes = notes } }, Cmd.none )
 
                             Err fail ->
                                 ( model, Cmd.none )
@@ -129,11 +140,16 @@ update msg model =
                     FileReadImage file ->
                         case file of
                             Ok newImageFile ->
-                                let
-                                    newCreateNote =
-                                        updateCreateNote newImageFile model.createNote
-                                in
-                                 ({ model | createNote = newCreateNote }, Cmd.none)
+                                case model.authenticated of
+                                    Annonyous ->
+                                        ( model, Cmd.none )
+
+                                    Login userData ->
+                                        let
+                                            newCreateNote =
+                                                updateCreateNote newImageFile userData.createNote
+                                        in
+                                            ( { model | authenticated = Login { userData | createNote = newCreateNote } }, Cmd.none )
 
                             Err fail ->
                                 ( model, Cmd.none )
@@ -147,9 +163,12 @@ update msg model =
             SelectImageFile id ->
                 model ! [ sendData (FileSelected id) ]
 
+
 updateCreateNote : Image -> CreateNote -> CreateNote
 updateCreateNote newImageFile note =
     { note | imageFile = Just newImageFile }
+
+
 
 -- Commands --
 
@@ -168,69 +187,99 @@ subscriptions _ =
 view : Model -> Html Msg
 view model =
     case model.route of
+        -- case is model authenticated forcing pattern match
         Home ->
-            if model.isAuthenticated then
-                div []
-                    [ h1 [] [ text "Our Elm App is working!" ]
-                    , renderNotes model.notes
-                    ]
-            else
-                div [ class "lander" ]
-                    [ h1 [] [ text "Meow Notes" ]
-                    , p [] [ text "A simple meow taking app... elm" ]
-                    ]
+            case model.authenticated of
+                Login userData ->
+                    div []
+                        [ h1 [] [ text "Our Elm App is working!" ]
+                        , Listgroup.custom (renderNotes userData.notes)
+                        ]
+
+                Annonyous ->
+                    renderLanding "Welcome"
 
         NewNote ->
-            div []
-                [ h1 [] [ text "Here is where Elm note is going!" ]
-                , Form.form []
-                    [ Form.group []
-                        [ label [ for "content" ] []
-                        , Textarea.textarea
-                            [ Textarea.id "content"
+            case model.authenticated of
+                Login userData ->
+                    div []
+                        [ h1 [] [ text "Here is where Elm note is going!" ]
+                        , Form.form []
+                            [ Form.group []
+                                [ label [ for "content" ] []
+                                , Textarea.textarea
+                                    [ Textarea.id "content"
+                                    ]
+                                ]
+                            , Form.group []
+                                [ Form.label [ for "file" ] [ text "Attachment" ]
+                                , input [ type_ "file", id "imageFileInput", on "change" (Json.Decode.succeed (SelectImageFile "imageFileInput")) ] []
+                                ]
+                            , Button.button [ Button.primary, Button.attrs [ onWithOptions "click" { stopPropagation = True, preventDefault = True } (Json.Decode.succeed (SelectImageFile "imageFileInput")) ] ] [ text "Create" ]
                             ]
+                        , viewImagePreview userData.createNote.imageFile
                         ]
-                    , Form.group []
-                        [ Form.label [ for "file" ] [ text "Attachment" ]
-                        , input [ type_ "file", id "imageFileInput", on "change"  (Json.Decode.succeed (SelectImageFile "imageFileInput"))] []
-                        ]
-                    , Button.button [ Button.primary, Button.attrs [ onWithOptions "click" { stopPropagation = True, preventDefault = True } (Json.Decode.succeed (SelectImageFile "imageFileInput")) ] ] [ text "Create" ]
-                    ]
-                , viewImagePreview model.createNote.imageFile  
-                ]
+
+                Annonyous ->
+                    renderLanding "Login to create a new note!"
 
         NotFound ->
             div []
                 [ h1 [] [ text "Nothing here meow" ] ]
 
 
-renderNotes : List Note -> Html Msg
+
+-- annoynous function w/o name
+-- functions with name in a let block
+-- copy body outside of the function
+-- WOW really clean and simple
+-- how many things does this thing need to know?
+-- UNIX predate composition?
+-- functur
+
+
+renderNote : Note -> Listgroup.CustomItem Msg
+renderNote note =
+    Listgroup.button
+        [ Listgroup.attrs <| [ onClick <| JSRedirectTo ("notes/" ++ note.noteId) ]
+        ]
+        [ text (noteTitle note.content) ]
+
+
+
+-- ({ content = "Create a New Note", createdAt = 0, noteId = "new" } :: notes)
+-- pullout and make separate note
+
+
+renderNotes : List Note -> List (Listgroup.CustomItem Msg)
 renderNotes notes =
-    let
-        noteItems =
-            List.map
-                (\n ->
-                    Listgroup.button
-                        [ Listgroup.attrs <| [ onClick <| JSRedirectTo ("notes/" ++ n.noteId) ]
-                        ]
-                        [ text (noteTitle n.content) ]
-                )
-                ({ content = "Create a New Note", createdAt = 0, noteId = "new" } :: notes)
-    in
-        Listgroup.custom noteItems
+    List.map renderNote notes
+
+
+renderLanding : String -> Html Msg
+renderLanding input =
+    div [ class "lander" ]
+        [ h1 [] [ text "Meow Notes" ]
+        , p [] [ text "A simple meow taking app... elm" ]
+        , p [] [ text input ]
+        ]
 
 
 noteTitle : String -> String
 noteTitle content =
     content |> String.lines |> List.head |> Maybe.withDefault "Note Title"
 
+
 viewImagePreview : Maybe Image -> Html Msg
 viewImagePreview image =
     case image of
         Just i ->
-         img [ src i.content, title i.fileName] []
+            img [ src i.content, title i.fileName ] []
+
         Nothing ->
-          text ""
+            text ""
+
+
 
 ---- PROGRAM ----
 
