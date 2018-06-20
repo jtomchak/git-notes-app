@@ -31,8 +31,8 @@ type alias UserData =
 
 
 type Authenticated
-    = Login UserData
-    | Annonyous
+    = Login ( UserData, LoggedInRoute )
+    | Annouyous AnnonyousRoute
 
 
 
@@ -45,6 +45,8 @@ type Authenticated
 --     -- tag for each of the states
 --     -- (authtenticated, annonyous),
 --     }
+--Login {data : UserData, route : LoggedInRoute}
+--Login : UserData -> LoggedInRoute -> Authenticated
 
 
 type alias Model =
@@ -67,6 +69,18 @@ init flags =
             }
     in
         model ! [ sendData (FetchNotes "/notes") ]
+
+
+type AnnonyousRoute
+    = LoginPage
+    | SigninPage
+    | LandingPage
+
+
+type LoggedInRoute
+    = NotesPage
+    | NewNotePage
+    | NotFoundPage
 
 
 type Route
