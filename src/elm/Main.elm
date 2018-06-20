@@ -18,6 +18,10 @@ import JSInterop exposing (..)
 ---- MODEL ----
 
 
+type alias LoginData =
+    { user : UserData, route : LoggedInRoute }
+
+
 type alias CreateNote =
     { content : String
     , imageFile : Maybe Image
@@ -64,7 +68,7 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         model =
-            { authenticated = Login { notes = [], createNote = { content = "", imageFile = Nothing } }
+            { authenticated = Anonymous LandingPage
             , route = urlToRoute flags.route
             }
     in
@@ -130,10 +134,10 @@ update msg model =
                     UpdateAuth isAuth ->
                         case isAuth of
                             Ok False ->
-                                ( { model | authenticated = Anonymous }, Cmd.none )
+                                ( { model | authenticated = Anonymous LandingPage }, Cmd.none )
 
                             Ok True ->
-                                ( { model | authenticated = Login { notes = [], createNote = { content = "", imageFile = Nothing } } }, Cmd.none )
+                                ( { model | authenticated = Login ( { notes = [], createNote = { content = "", imageFile = Nothing } }, NotesPage ) }, Cmd.none )
 
                             Err fail ->
                                 ( model, Cmd.none )
@@ -145,8 +149,8 @@ update msg model =
                                     Anonymous _ ->
                                         ( model, Cmd.none )
 
-                                    Login userData ->
-                                        ( { model | authenticated = Login { userData | notes = notes } }, Cmd.none )
+                                    Login ( userData, _ ) ->
+                                        ( { model | authenticated = Login ( { userData | notes = notes }, NotesPage ) }, Cmd.none )
 
                             Err fail ->
                                 ( model, Cmd.none )
@@ -158,12 +162,12 @@ update msg model =
                                     Anonymous _ ->
                                         ( model, Cmd.none )
 
-                                    Login userData ->
+                                    Login ( userData, _ ) ->
                                         let
                                             newCreateNote =
                                                 updateCreateNote newImageFile userData.createNote
                                         in
-                                            ( { model | authenticated = Login { userData | createNote = newCreateNote } }, Cmd.none )
+                                            ( { model | authenticated = Login ( { userData | createNote = newCreateNote }, NewNotePage ) }, Cmd.none )
 
                             Err fail ->
                                 ( model, Cmd.none )
@@ -204,7 +208,7 @@ view model =
         -- case is model authenticated forcing pattern match
         Home ->
             case model.authenticated of
-                Login userData ->
+                Login ( userData, _ ) ->
                     div []
                         [ h1 [] [ text "Our Elm App is working!" ]
                         , Button.button [ Button.primary, Button.attrs [ onClick (JSRedirectTo "notes/new") ] ] [ text "New Note" ]
@@ -216,7 +220,7 @@ view model =
 
         NewNote ->
             case model.authenticated of
-                Login userData ->
+                Login ( userData, _ ) ->
                     div []
                         [ h1 [] [ text "Here is where Elm note is going!" ]
                         , Form.form []
