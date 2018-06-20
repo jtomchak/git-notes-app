@@ -142,7 +142,7 @@ update msg model =
                         case notes of
                             Ok notes ->
                                 case model.authenticated of
-                                    Anonymous ->
+                                    Anonymous _ ->
                                         ( model, Cmd.none )
 
                                     Login userData ->
@@ -155,7 +155,7 @@ update msg model =
                         case file of
                             Ok newImageFile ->
                                 case model.authenticated of
-                                    Anonymous ->
+                                    Anonymous _ ->
                                         ( model, Cmd.none )
 
                                     Login userData ->
@@ -211,7 +211,7 @@ view model =
                         , Listgroup.custom (renderNotes userData.notes)
                         ]
 
-                Anonymous ->
+                Anonymous _ ->
                     renderLanding "Welcome"
 
         NewNote ->
@@ -235,7 +235,7 @@ view model =
                         , viewImagePreview userData.createNote.imageFile
                         ]
 
-                Anonymous ->
+                Anonymous _ ->
                     renderLanding "Login to create a new note!"
 
         NotFound ->
