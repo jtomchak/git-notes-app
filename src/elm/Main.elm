@@ -193,6 +193,7 @@ view model =
                 Login userData ->
                     div []
                         [ h1 [] [ text "Our Elm App is working!" ]
+                        , Button.button [ Button.primary, Button.attrs [ onClick (JSRedirectTo "notes/new") ] ] [ text "New Note" ]
                         , Listgroup.custom (renderNotes userData.notes)
                         ]
 
