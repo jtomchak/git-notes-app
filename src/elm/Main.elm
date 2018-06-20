@@ -32,7 +32,7 @@ type alias UserData =
 
 type Authenticated
     = Login ( UserData, LoggedInRoute )
-    | Annouyous AnnonyousRoute
+    | Anonymous AnonymousRoute
 
 
 
@@ -43,7 +43,7 @@ type Authenticated
 --     , route : Route
 --     , createNote : CreateNote
 --     -- tag for each of the states
---     -- (authtenticated, annonyous),
+--     -- (authtenticated, Anonymous),
 --     }
 --Login {data : UserData, route : LoggedInRoute}
 --Login : UserData -> LoggedInRoute -> Authenticated
@@ -71,7 +71,7 @@ init flags =
         model ! [ sendData (FetchNotes "/notes") ]
 
 
-type AnnonyousRoute
+type AnonymousRoute
     = LoginPage
     | SigninPage
     | LandingPage
@@ -130,7 +130,7 @@ update msg model =
                     UpdateAuth isAuth ->
                         case isAuth of
                             Ok False ->
-                                ( { model | authenticated = Annonyous }, Cmd.none )
+                                ( { model | authenticated = Anonymous }, Cmd.none )
 
                             Ok True ->
                                 ( { model | authenticated = Login { notes = [], createNote = { content = "", imageFile = Nothing } } }, Cmd.none )
@@ -142,7 +142,7 @@ update msg model =
                         case notes of
                             Ok notes ->
                                 case model.authenticated of
-                                    Annonyous ->
+                                    Anonymous ->
                                         ( model, Cmd.none )
 
                                     Login userData ->
@@ -155,7 +155,7 @@ update msg model =
                         case file of
                             Ok newImageFile ->
                                 case model.authenticated of
-                                    Annonyous ->
+                                    Anonymous ->
                                         ( model, Cmd.none )
 
                                     Login userData ->
@@ -211,7 +211,7 @@ view model =
                         , Listgroup.custom (renderNotes userData.notes)
                         ]
 
-                Annonyous ->
+                Anonymous ->
                     renderLanding "Welcome"
 
         NewNote ->
@@ -235,7 +235,7 @@ view model =
                         , viewImagePreview userData.createNote.imageFile
                         ]
 
-                Annonyous ->
+                Anonymous ->
                     renderLanding "Login to create a new note!"
 
         NotFound ->
