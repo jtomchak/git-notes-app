@@ -219,6 +219,10 @@ view model =
                     renderLanding "Welcome"
 
         NewNote ->
+         let
+        _ =
+            Debug.log "model" model
+        in
             case model.authenticated of
                 Login ( userData, _ ) ->
                     div []

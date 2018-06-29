@@ -25,6 +25,16 @@ export default class NewNote extends Component {
     };
   }
 
+  componentDidMount() {
+    sendData({ tag: "IS_AUTHENTICATED", data: this.props.isAuthenticated });
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.isAuthenticated !== this.props.isAuthenticated) {
+      sendData({ tag: "IS_AUTHENTICATED", data: this.props.isAuthenticated });
+    }
+  }
+
   validateForm() {
     return this.state.content.length > 0;
   }
@@ -80,29 +90,6 @@ export default class NewNote extends Component {
           ports={initPorts(this.context)}
           flags={{ route: this.props.match.url }}
         />
-        {/* <form onSubmit={this.handleSubmit}>
-          <FormGroup controlId="content">
-            <FormControl
-              onChange={this.handleChange}
-              value={this.state.content}
-              componentClass="textarea"
-            />
-          </FormGroup>
-          <FormGroup controlId="file">
-            <ControlLabel>Attachment</ControlLabel>
-            <FormControl onChange={this.handleFileChange} type="file" />
-          </FormGroup>
-          <LoaderButton
-            block
-            bsStyle="primary"
-            bsSize="large"
-            disabled={!this.validateForm()}
-            type="submit"
-            isLoading={this.state.isLoading}
-            text="Create"
-            loadingText="Creating…"
-          />
-        </form> */}
       </div>
     );
   }
