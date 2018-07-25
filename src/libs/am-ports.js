@@ -1,4 +1,4 @@
-import { invokeApig } from "../libs/awsLib";
+import { invokeApig, s3Upload } from "../libs/awsLib";
 
 export let sendData;
 
@@ -20,6 +20,24 @@ const fileUploadReader = (id, fn) => {
 
   //connect to file from input passed into function
   reader.readAsDataURL(file);
+};
+
+const postNote = async function(content, attachment) {
+  try {
+    const uploadedFilename = attachment
+      ? (await s3Upload(attachment)).Location
+      : null;
+    return invokeApig({
+      path: "/notes",
+      method: "POST",
+      body: {
+        content: content,
+        attachment: uploadedFilename
+      }
+    });
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 export const initPorts = context => ports => {
@@ -44,6 +62,16 @@ export const initPorts = context => ports => {
           });
         }
         fileUploadReader(msg.data, sendReadFile);
+        break;
+      case "CREATE_NEW_NOTE":
+        console.log(msg.data);
+        const { content, imageFile } = msg.data;
+        postNote(content, imageFile)
+          .then(result => {
+            context.router.history.push("/");
+            console.log(result);
+          })
+          .catch(err => console.log(err));
         break;
       default:
         return null;

@@ -3,6 +3,19 @@ module Note exposing (..)
 import Json.Decode exposing (..)
 
 
+type alias CreateNote =
+    { content : String
+    , imageFile : Maybe Image
+    }
+
+
+type alias Note =
+    { content : String
+    , createdAt : Int
+    , noteId : String
+    }
+
+
 noteDecoder : Decoder Note
 noteDecoder =
     map3 Note
@@ -14,13 +27,6 @@ noteDecoder =
 noteListDecoder : Decoder (List Note)
 noteListDecoder =
     list noteDecoder
-
-
-type alias Note =
-    { content : String
-    , createdAt : Int
-    , noteId : String
-    }
 
 
 fileImageDecoder : Decoder Image

@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Http
 import Date exposing (..)
-import Note exposing (Note, Image)
+import Note exposing (Note, Image, CreateNote)
 import Html exposing (Html, text, div, h1, img, li, ul, p, label, input)
 import Html.Events exposing (onClick, onWithOptions, on)
 import Html.Attributes exposing (src, class, for, type_, id, title)
@@ -20,12 +20,6 @@ import JSInterop exposing (..)
 
 type alias LoginData =
     { user : UserData, route : LoggedInRoute }
-
-
-type alias CreateNote =
-    { content : String
-    , imageFile : Maybe Image
-    }
 
 
 type alias UserData =
@@ -115,6 +109,8 @@ type Msg
     | JSRedirectTo String
     | LogErr String
     | SelectImageFile String
+    | UpdateNoteContent String
+    | PostNote
 
 
 
@@ -165,7 +161,7 @@ update msg model =
                                     Login ( userData, _ ) ->
                                         let
                                             newCreateNote =
-                                                updateCreateNote newImageFile userData.createNote
+                                                updateCreateNoteImage newImageFile userData.createNote
                                         in
                                             ( { model | authenticated = Login ( { userData | createNote = newCreateNote }, NewNotePage ) }, Cmd.none )
 
@@ -181,10 +177,35 @@ update msg model =
             SelectImageFile id ->
                 model ! [ sendData (FileSelected id) ]
 
+            UpdateNoteContent content ->
+                case model.authenticated of
+                    Anonymous _ ->
+                        ( model, Cmd.none )
 
-updateCreateNote : Image -> CreateNote -> CreateNote
-updateCreateNote newImageFile note =
+                    Login ( userData, _ ) ->
+                        let
+                            updateNewNote =
+                                updateCreateNoteContent content userData.createNote
+                        in
+                            ( { model | authenticated = Login ( { userData | createNote = updateNewNote }, NewNotePage ) }, Cmd.none )
+
+            PostNote ->
+                case model.authenticated of
+                    Anonymous _ ->
+                        ( model, Cmd.none )
+
+                    Login ( userData, _ ) ->
+                        model ! [ sendData (PostCreateNote userData.createNote) ]
+
+
+updateCreateNoteImage : Image -> CreateNote -> CreateNote
+updateCreateNoteImage newImageFile note =
     { note | imageFile = Just newImageFile }
+
+
+updateCreateNoteContent : String -> CreateNote -> CreateNote
+updateCreateNoteContent content note =
+    { note | content = content }
 
 
 
@@ -219,10 +240,6 @@ view model =
                     renderLanding "Welcome"
 
         NewNote ->
-         let
-        _ =
-            Debug.log "model" model
-        in
             case model.authenticated of
                 Login ( userData, _ ) ->
                     div []
@@ -231,14 +248,13 @@ view model =
                             [ Form.group []
                                 [ label [ for "content" ] []
                                 , Textarea.textarea
-                                    [ Textarea.id "content"
-                                    ]
+                                    [ Textarea.id "content", Textarea.onInput UpdateNoteContent, Textarea.value userData.createNote.content ]
                                 ]
                             , Form.group []
                                 [ Form.label [ for "file" ] [ text "Attachment" ]
                                 , input [ type_ "file", id "imageFileInput", on "change" (Json.Decode.succeed (SelectImageFile "imageFileInput")) ] []
                                 ]
-                            , Button.button [ Button.primary, Button.attrs [ onWithOptions "click" { stopPropagation = True, preventDefault = True } (Json.Decode.succeed (SelectImageFile "imageFileInput")) ] ] [ text "Create" ]
+                            , Button.button [ Button.primary, Button.attrs [ onWithOptions "click" { stopPropagation = True, preventDefault = True } (Json.Decode.succeed (PostNote)) ] ] [ text "Create" ]
                             ]
                         , viewImagePreview userData.createNote.imageFile
                         ]

@@ -1,6 +1,6 @@
 port module JSInterop exposing (..)
 
-import Note exposing (Note, noteDecoder, noteListDecoder, Image, fileImageDecoder)
+import Note exposing (Note, noteDecoder, noteListDecoder, Image, fileImageDecoder, CreateNote)
 import Json.Decode exposing (Decoder, decodeValue, decodeString, bool)
 import Json.Encode
 
@@ -19,6 +19,9 @@ sendData info =
 
         FileSelected id ->
             outgoingData { tag = "File_SELECTED", data = Json.Encode.string id }
+
+        PostCreateNote newNote ->
+            outgoingData { tag = "CREATE_NEW_NOTE", data = Json.Encode.object [ ( "content", Json.Encode.string newNote.content ), ( "imageFile", Json.Encode.string "" ) ] }
 
 
 receiveData : (IncomingData -> msg) -> (String -> msg) -> Sub msg
@@ -45,6 +48,7 @@ type OutgoingData
     | RedirectTo String
     | LogError String
     | FileSelected String
+    | PostCreateNote CreateNote
 
 
 type IncomingData
