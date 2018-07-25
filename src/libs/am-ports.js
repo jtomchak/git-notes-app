@@ -70,13 +70,14 @@ export const initPorts = context => ports => {
         fileUploadReader(msg.data, sendReadFile);
         break;
       case "CREATE_NEW_NOTE":
+        const { noteContent, image } = msg.data;
         console.log(msg.data);
-        // postNote(content, image)
-        //   .then(result => {
-        //     context.router.history.push("/");
-        //     console.log(result);
-        //   })
-        //   .catch(err => console.log(err));
+        postNote(noteContent, image)
+          .then(result => {
+            context.router.history.push("/");
+            console.log(result);
+          })
+          .catch(err => console.log(err));
         break;
       default:
         return null;
