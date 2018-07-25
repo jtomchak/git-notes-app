@@ -12,10 +12,16 @@ const fileUploadReader = (id, fn) => {
   let reader = new FileReader();
 
   reader.onload = function(event) {
+    console.log(file);
     //event target is the resulting file
     let base64encoded = event.target.result;
     //invoke callback once content has been loaded
-    fn({ content: base64encoded, fileName: file.name });
+    fn({
+      content: base64encoded,
+      name: file.name,
+      fileType: file.type,
+      size: file.size
+    });
   };
 
   //connect to file from input passed into function
@@ -65,13 +71,12 @@ export const initPorts = context => ports => {
         break;
       case "CREATE_NEW_NOTE":
         console.log(msg.data);
-        const { content, imageFile } = msg.data;
-        postNote(content, imageFile)
-          .then(result => {
-            context.router.history.push("/");
-            console.log(result);
-          })
-          .catch(err => console.log(err));
+        // postNote(content, image)
+        //   .then(result => {
+        //     context.router.history.push("/");
+        //     console.log(result);
+        //   })
+        //   .catch(err => console.log(err));
         break;
       default:
         return null;

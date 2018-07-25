@@ -133,7 +133,7 @@ update msg model =
                                 ( { model | authenticated = Anonymous LandingPage }, Cmd.none )
 
                             Ok True ->
-                                ( { model | authenticated = Login ( { notes = [], createNote = { content = "", imageFile = Nothing } }, NotesPage ) }, Cmd.none )
+                                ( { model | authenticated = Login ( { notes = [], createNote = { content = "", image = Nothing } }, NotesPage ) }, Cmd.none )
 
                             Err fail ->
                                 ( model, Cmd.none )
@@ -199,8 +199,12 @@ update msg model =
 
 
 updateCreateNoteImage : Image -> CreateNote -> CreateNote
-updateCreateNoteImage newImageFile note =
-    { note | imageFile = Just newImageFile }
+updateCreateNoteImage newImage newNote =
+    let
+        _ =
+            Debug.log "image" newImage
+    in
+        { newNote | image = Just newImage }
 
 
 updateCreateNoteContent : String -> CreateNote -> CreateNote
@@ -256,7 +260,7 @@ view model =
                                 ]
                             , Button.button [ Button.primary, Button.attrs [ onWithOptions "click" { stopPropagation = True, preventDefault = True } (Json.Decode.succeed (PostNote)) ] ] [ text "Create" ]
                             ]
-                        , viewImagePreview userData.createNote.imageFile
+                        , viewImagePreview userData.createNote.image
                         ]
 
                 Anonymous _ ->
@@ -313,7 +317,7 @@ viewImagePreview : Maybe Image -> Html Msg
 viewImagePreview image =
     case image of
         Just i ->
-            img [ src i.content, title i.fileName ] []
+            img [ src i.content, title i.name ] []
 
         Nothing ->
             text ""

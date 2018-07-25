@@ -1,11 +1,20 @@
 module Note exposing (..)
 
-import Json.Decode exposing (..)
+import Json.Decode as Decode exposing (..)
+import Json.Encode as Encode exposing (..)
+
+
+type alias Image =
+    { content : String
+    , name : String
+    , fileType : String
+    , size : Int
+    }
 
 
 type alias CreateNote =
     { content : String
-    , imageFile : Maybe Image
+    , image : Maybe Image
     }
 
 
@@ -19,24 +28,47 @@ type alias Note =
 noteDecoder : Decoder Note
 noteDecoder =
     map3 Note
-        (field "content" string)
-        (field "createdAt" int)
-        (field "noteId" string)
+        (field "content" Decode.string)
+        (field "createdAt" Decode.int)
+        (field "noteId" Decode.string)
 
 
 noteListDecoder : Decoder (List Note)
 noteListDecoder =
-    list noteDecoder
+    Decode.list noteDecoder
 
 
 fileImageDecoder : Decoder Image
 fileImageDecoder =
-    map2 Image
-        (field "content" string)
-        (field "fileName" string)
+    map4 Image
+        (field "content" Decode.string)
+        (field "name" Decode.string)
+        (field "fileType" Decode.string)
+        (field "size" Decode.int)
 
 
-type alias Image =
-    { content : String
-    , fileName : String
-    }
+noteEncoder : CreateNote -> Encode.Value
+noteEncoder newNote =
+    let
+        _ =
+            Debug.log "newNote" newNote
+    in
+        case newNote.image of
+            Nothing ->
+                Encode.object [ ( "content", Encode.string newNote.content ) ]
+
+            Just image ->
+                Encode.object
+                    [ ( "noteContent", Encode.string newNote.content )
+                    , ( "image", imageEncoder image )
+                    ]
+
+
+imageEncoder : Image -> Encode.Value
+imageEncoder image =
+    Encode.object
+        [ ( "content", Encode.string image.content )
+        , ( "name", Encode.string image.name )
+        , ( "type", Encode.string image.fileType )
+        , ( "size", Encode.int image.size )
+        ]
