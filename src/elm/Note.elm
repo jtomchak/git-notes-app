@@ -55,7 +55,7 @@ noteEncoder newNote =
     in
         case newNote.image of
             Nothing ->
-                Encode.object [ ( "content", Encode.string newNote.content ) ]
+                Encode.object [ ( "noteContent", Encode.string newNote.content ) ]
 
             Just image ->
                 Encode.object
