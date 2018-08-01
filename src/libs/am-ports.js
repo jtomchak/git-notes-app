@@ -1,4 +1,5 @@
 import { invokeApig, s3Upload } from "../libs/awsLib";
+import resizeImage from "../libs/resize";
 
 export let sendData;
 
@@ -9,23 +10,23 @@ const fileUploadReader = (id, fn) => {
   }
 
   let file = node.files[0];
-  let reader = new FileReader();
-
-  reader.onload = function(event) {
-    console.log(file);
-    //event target is the resulting file
-    let base64encoded = event.target.result;
-    //invoke callback once content has been loaded
-    fn({
-      content: base64encoded,
-      name: file.name,
-      fileType: file.type,
-      size: file.size
+  resizeImage({
+    file: file,
+    maxSize: 900
+  })
+    .then(function(resizedImage) {
+      console.log("upload resized image");
+      //invoke callback once content has been loaded
+      fn({
+        content: resizedImage,
+        name: file.name,
+        fileType: file.type,
+        size: file.size
+      });
+    })
+    .catch(function(err) {
+      console.error(err);
     });
-  };
-
-  //connect to file from input passed into function
-  reader.readAsDataURL(file);
 };
 
 const postNote = async function(content, attachment) {
