@@ -10,7 +10,7 @@ export async function invokeApig({
   queryParams = {},
   body
 }) {
-  if (!await authUser()) {
+  if (!(await authUser())) {
     throw new Error("User is not logged in");
   }
 
@@ -102,10 +102,13 @@ function getCurrentUser() {
 }
 
 export async function s3Upload(file) {
-  if (!await authUser()) {
+  if (!(await authUser())) {
     throw new Error("User is not logged in");
   }
-
+  const buf = new Buffer(
+    file.content.replace(/^data:image\/\w+;base64,/, ""),
+    "base64"
+  );
   const s3 = new AWS.S3({
     params: {
       Bucket: config.s3.BUCKET
@@ -118,7 +121,7 @@ export async function s3Upload(file) {
   return s3
     .upload({
       Key: filename,
-      Body: file,
+      Body: buf,
       ContentType: file.type,
       ACL: "public-read"
     })
