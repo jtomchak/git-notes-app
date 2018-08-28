@@ -3,9 +3,9 @@ module Main exposing (..)
 import Http
 import Date exposing (..)
 import Note exposing (Note, Image, CreateNote)
-import Html exposing (Html, text, div, h1, img, li, ul, p, label, input)
+import Html exposing (Html, Attribute, text, div, h1, img, li, ul, p, label, input)
 import Html.Events exposing (onClick, onWithOptions, on)
-import Html.Attributes exposing (src, class, for, type_, id, title)
+import Html.Attributes exposing (src, class, for, type_, id, title, attribute)
 import Bootstrap.ListGroup as Listgroup
 import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
@@ -305,7 +305,18 @@ renderLanding input =
         [ h1 [] [ text "Meow Notes" ]
         , p [] [ text "A simple meow taking app... elm" ]
         , p [] [ text input ]
+        , Html.node "custom-square" [ squareLength 100, squareColor "red" ] []
         ]
+
+
+squareLength : Int -> Attribute msg
+squareLength n =
+    attribute "l" (toString n)
+
+
+squareColor : String -> Attribute msg
+squareColor c =
+    attribute "c" c
 
 
 noteTitle : String -> String
