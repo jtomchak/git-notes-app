@@ -14,18 +14,9 @@ const init = () => {
       "markdown-text",
       HTMLElement =>
         class MarkdownText extends HTMLElement {
-          // Specify observed attributes so that
-          // attributeChangedCallback will work
-          // static get observedAttributes() {
-          //   return ["w", "l"];
-          // }
-
           constructor() {
             // Always call super first in constructor
             super();
-            const shadow = this.attachShadow({ mode: "open" });
-            const textarea = document.createElement("textarea");
-            shadow.appendChild(textarea);
 
             this._markdownValue = "Oh man!!!!!";
           }
@@ -43,11 +34,13 @@ const init = () => {
           connectedCallback() {
             console.log(
               "Custom markdown element added to page.",
-              this.shadowRoot.firstChild
+              this.shadowRoot
             );
-            this._markdown = CodeMirror.fromTextArea(
-              this.shadowRoot.firstChild
-            );
+            this._markdown = CodeMirror(this, {
+              mode: "markdown",
+              lineNumbers: true,
+              value: "HI"
+            });
           }
 
           disconnectedCallback() {
