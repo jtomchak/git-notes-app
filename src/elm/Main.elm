@@ -306,7 +306,13 @@ renderLanding input =
         , p [] [ text "A simple meow taking app... elm" ]
         , p [] [ text input ]
         , Html.node "custom-square" [ squareLength 100, squareColor "red" ] []
+        , Html.node "markdown-text" [ mdTextPlaceholder "Message here..." ] []
         ]
+
+
+mdTextPlaceholder : String -> Attribute msg
+mdTextPlaceholder txt =
+    attribute "placeholder" txt
 
 
 squareLength : Int -> Attribute msg

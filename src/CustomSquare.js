@@ -50,10 +50,8 @@ export default { init };
 function updateStyle(elem) {
   const shadow = elem.shadowRoot;
   const childNodes = Array.from(shadow.childNodes);
-  const lAttribute = parseInt(elem.getAttribute("l"), 10);
   childNodes.forEach(childNode => {
     if (childNode.nodeName === "STYLE") {
-      console.log(lAttribute);
       childNode.textContent = `
           div {
             width: ${elem.getAttribute("l")}px;
