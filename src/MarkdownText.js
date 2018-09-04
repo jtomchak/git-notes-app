@@ -3,7 +3,8 @@ import CustomElements from "./libs/CustomElements";
 const load = () => {
   return Promise.all([
     import(/* webpackChunkName: "codemirror-base" */ "codemirror/lib/codemirror"),
-    import(/* webpackChunkName: "codemirror-base", webpackMode: "eager" */ "codemirror/lib/codemirror.css")
+    import(/* webpackChunkName: "codemirror-base", webpackMode: "eager" */ "codemirror/lib/codemirror.css"),
+    import(/* wepackChunkName: "markdown-text-base", webpackMode: "eager" */ "./MarkdownText.scss")
   ]).then(([CodeMirror]) => CodeMirror);
 };
 
@@ -17,8 +18,6 @@ const init = () => {
           constructor() {
             // Always call super first in constructor
             super();
-
-            this._markdownValue = "Oh man!!!!!";
           }
 
           get markdownValue() {
@@ -26,20 +25,33 @@ const init = () => {
           }
 
           set markdownValue(value) {
-            this._markdownValue = value;
-            if (!this._markdown) return;
-            this._markdown.value(value);
+            if (value !== null && value !== this._markdownValue) {
+              this._markdownValue = value;
+              if (!this._markdownInstance) return;
+              this._markdownInstance.setValue(value);
+              // this._markdownInstance.setCursor(
+              //   this._markdownInstance.lineCount(),
+              //   0
+              // );
+            }
           }
 
           connectedCallback() {
-            console.log(
-              "Custom markdown element added to page.",
-              this.shadowRoot
-            );
-            this._markdown = CodeMirror(this, {
+            console.log("Custom markdown element added to page.");
+            this._markdownInstance = CodeMirror(this, {
               mode: "markdown",
               lineNumbers: true,
-              value: "HI"
+              value: this._markdownValue,
+              linewrapping: true,
+              autofocus: true,
+              direction: "ltr"
+            });
+
+            //onChange Event
+            this._markdownInstance.on("changes", () => {
+              console.log(this._markdownInstance.getValue());
+              this._markdownValue = this._markdownInstance.getValue();
+              this.dispatchEvent(new CustomEvent("markdownTextChange"));
             });
           }
 
