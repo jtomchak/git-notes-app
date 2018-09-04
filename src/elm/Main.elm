@@ -8,8 +8,6 @@ import Html.Events exposing (onClick, onWithOptions, on)
 import Html.Attributes exposing (src, class, for, type_, id, title, attribute)
 import Bootstrap.ListGroup as Listgroup
 import Bootstrap.Form as Form
-import Bootstrap.Form.Input as Input
-import Bootstrap.Form.Textarea as Textarea
 import Bootstrap.Button as Button
 import Json.Decode exposing (..)
 import Json.Encode exposing (string)
@@ -206,11 +204,7 @@ updateCreateNoteImage newImage newNote =
 
 updateCreateNoteContent : String -> CreateNote -> CreateNote
 updateCreateNoteContent content note =
-    let
-        _ =
-            Debug.log "newNote" note
-    in
-        { note | content = content }
+    { note | content = content }
 
 
 
