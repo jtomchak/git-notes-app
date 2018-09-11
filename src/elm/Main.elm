@@ -2,6 +2,8 @@ module Main exposing (..)
 
 import Http
 import Date exposing (..)
+import UrlParser as Url exposing (Parser, (</>), (<?>), s, int, stringParam, top)
+import Navigation exposing (Location)
 import Note exposing (Note, Image, CreateNote)
 import Html exposing (Html, Attribute, text, div, h1, img, li, ul, p, label, input)
 import Html.Events exposing (onClick, onWithOptions, on)
@@ -39,7 +41,7 @@ type alias Model =
 
 
 type alias Flags =
-    { route : String
+    { location : Location
     }
 
 
@@ -48,7 +50,7 @@ init flags =
     let
         model =
             { authenticated = Anonymous LandingPage
-            , route = urlToRoute flags.route
+            , route = Url.parsePath routeParser flags.location
             }
     in
         model ! [ sendData (FetchNotes "/notes") ]
@@ -70,8 +72,17 @@ type LoggedInRoute
 type Route
     = Home
     | NewNote
-    | Note
+    | Note Int
     | NotFound
+
+
+routeParser : Url.Parser (Route -> a) a
+routeParser =
+    oneOf
+        [ map Home Url.top
+        , map NewNote (s "notes" </> s "new")
+        , map Note (s "notes" </> Url.int)
+        ]
 
 
 urlToRoute : String -> Route
@@ -234,9 +245,6 @@ view model =
                         , Form.form []
                             [ Form.group []
                                 [ label [ for "content" ] []
-
-                                -- , Textarea.textarea
-                                --     [ Textarea.id "content", Textarea.onInput UpdateNoteContent, Textarea.value userData.createNote.content ]
                                 , Html.node "markdown-text"
                                     [ Html.Attributes.property "markdownValue" <| Json.Encode.string userData.createNote.content
                                     , Html.Events.on "markdownTextChange" <| Json.Decode.map UpdateNoteContent <| Json.Decode.at [ "target", "markdownValue" ] <| Json.Decode.string
@@ -255,7 +263,7 @@ view model =
                 Anonymous _ ->
                     renderLanding "Login to create a new note!"
 
-        Note ->
+        Note noteId ->
             case model.authenticated of
                 Login ( userData, _ ) ->
                     div []
