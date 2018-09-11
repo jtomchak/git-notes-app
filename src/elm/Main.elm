@@ -3,15 +3,14 @@ module Main exposing (..)
 import Http
 import Date exposing (..)
 import Note exposing (Note, Image, CreateNote)
-import Html exposing (Html, text, div, h1, img, li, ul, p, label, input)
+import Html exposing (Html, Attribute, text, div, h1, img, li, ul, p, label, input)
 import Html.Events exposing (onClick, onWithOptions, on)
-import Html.Attributes exposing (src, class, for, type_, id, title)
+import Html.Attributes exposing (src, class, for, type_, id, title, attribute)
 import Bootstrap.ListGroup as Listgroup
 import Bootstrap.Form as Form
-import Bootstrap.Form.Input as Input
-import Bootstrap.Form.Textarea as Textarea
 import Bootstrap.Button as Button
 import Json.Decode exposing (..)
+import Json.Encode exposing (string)
 import JSInterop exposing (..)
 
 
@@ -200,11 +199,7 @@ update msg model =
 
 updateCreateNoteImage : Image -> CreateNote -> CreateNote
 updateCreateNoteImage newImage newNote =
-    let
-        _ =
-            Debug.log "image" newImage
-    in
-        { newNote | image = Just newImage }
+    { newNote | image = Just newImage }
 
 
 updateCreateNoteContent : String -> CreateNote -> CreateNote
@@ -251,8 +246,14 @@ view model =
                         , Form.form []
                             [ Form.group []
                                 [ label [ for "content" ] []
-                                , Textarea.textarea
-                                    [ Textarea.id "content", Textarea.onInput UpdateNoteContent, Textarea.value userData.createNote.content ]
+
+                                -- , Textarea.textarea
+                                --     [ Textarea.id "content", Textarea.onInput UpdateNoteContent, Textarea.value userData.createNote.content ]
+                                , Html.node "markdown-text"
+                                    [ Html.Attributes.property "markdownValue" <| Json.Encode.string userData.createNote.content
+                                    , Html.Events.on "markdownTextChange" <| Json.Decode.map UpdateNoteContent <| Json.Decode.at [ "target", "markdownValue" ] <| Json.Decode.string
+                                    ]
+                                    []
                                 ]
                             , Form.group []
                                 [ Form.label [ for "file" ] [ text "Attachment" ]
@@ -306,6 +307,21 @@ renderLanding input =
         , p [] [ text "A simple meow taking app... elm" ]
         , p [] [ text input ]
         ]
+
+
+mdTextPlaceholder : String -> Attribute msg
+mdTextPlaceholder txt =
+    attribute "placeholder" txt
+
+
+squareLength : Int -> Attribute msg
+squareLength n =
+    attribute "l" (toString n)
+
+
+squareColor : String -> Attribute msg
+squareColor c =
+    attribute "c" c
 
 
 noteTitle : String -> String

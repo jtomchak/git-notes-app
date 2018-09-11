@@ -10,7 +10,6 @@ export default class extends Component {
   initialize = node => {
     if (node === null) return;
     const app = this.props.src.embed(node, this.props.flags);
-
     if (typeof this.props.ports !== "undefined") {
       this.props.ports(app.ports);
     }

@@ -10,6 +10,8 @@ const InterpolateHtmlPlugin = require("react-dev-utils/InterpolateHtmlPlugin");
 const SWPrecacheWebpackPlugin = require("sw-precache-webpack-plugin");
 const eslintFormatter = require("react-dev-utils/eslintFormatter");
 const ModuleScopePlugin = require("react-dev-utils/ModuleScopePlugin");
+const CleanWebpackPlugin = require("clean-webpack-plugin");
+const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 const paths = require("./paths");
 const getClientEnvironment = require("./env");
 
@@ -90,7 +92,8 @@ module.exports = {
     alias: {
       // Support React Native Web
       // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
-      "react-native": "react-native-web"
+      "react-native": "react-native-web",
+      jquery: "jquery/dist/jquery.slim.min.js"
     },
     plugins: [
       // Prevents users from importing files from outside of src/ (or node_modules/).
@@ -98,7 +101,17 @@ module.exports = {
       // To fix this, we prevent you from importing files out of src/ -- if you'd like to,
       // please link the files into your node_modules/ and let module-resolution kick in.
       // Make sure your source files are compiled, as they will not be processed in any way.
-      new ModuleScopePlugin(paths.appSrc, [paths.appPackageJson])
+      new ModuleScopePlugin(paths.appSrc, [paths.appPackageJson]),
+      new CleanWebpackPlugin(["dist"]),
+      new webpack.ProvidePlugin({
+        $: "jquery"
+      }),
+      new UglifyJsPlugin({
+        sourceMap: true,
+        uglifyOptions: {
+          dead_code: true
+        }
+      })
     ]
   },
   module: {
@@ -215,6 +228,16 @@ module.exports = {
             )
             // Note: this won't work without `new ExtractTextPlugin()` in `plugins`.
           },
+          //-------------------- Add SCSS Loaders -------------------------//
+          {
+            test: /\.scss$/,
+            loaders: [
+              require.resolve("style-loader"),
+              require.resolve("css-loader"),
+              require.resolve("sass-loader")
+            ]
+          },
+
           // "file" loader makes sure assets end up in the `build` folder.
           // When you `import` an asset, you get its filename.
           // This loader doesn't use a "test" so it will catch all modules
@@ -225,7 +248,13 @@ module.exports = {
             // it's runtime that would otherwise processed through "file" loader.
             // Also exclude `html` and `json` extensions so they get processed
             // by webpacks internal loaders.
-            exclude: [/\.(js|jsx|mjs)$/, /\.html$/, /\.json$/, /\.elm$/], //Addition of Elm files
+            exclude: [
+              /\.(js|jsx|mjs)$/,
+              /\.html$/,
+              /\.json$/,
+              /\.elm$/,
+              /\.scss$/
+            ], //Addition of Elm files
             options: {
               name: "static/media/[name].[hash:8].[ext]"
             }

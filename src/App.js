@@ -6,7 +6,7 @@ import Routes from "./Routes";
 import RouteNavItem from "./components/RouteNavItem";
 import { authUser, signOutUser } from "./libs/awsLib";
 
-import "./App.css";
+import "./App.scss";
 
 class App extends Component {
   state = {
