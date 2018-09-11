@@ -16,13 +16,6 @@ import "./NewNote.css";
 export default class NewNote extends Component {
   constructor(props) {
     super(props);
-
-    this.file = null;
-
-    this.state = {
-      isLoading: null,
-      content: ""
-    };
   }
 
   componentDidMount() {
@@ -33,53 +26,6 @@ export default class NewNote extends Component {
     if (nextProps.isAuthenticated !== this.props.isAuthenticated) {
       sendData({ tag: "IS_AUTHENTICATED", data: this.props.isAuthenticated });
     }
-  }
-
-  validateForm() {
-    return this.state.content.length > 0;
-  }
-
-  handleChange = event => {
-    this.setState({
-      [event.target.id]: event.target.value
-    });
-  };
-
-  handleFileChange = event => {
-    this.file = event.target.files[0];
-  };
-
-  handleSubmit = async event => {
-    event.preventDefault();
-
-    if (this.file && this.file.size > config.MAX_ATTACHMENT_SIZE) {
-      alert("Please pick a file smaller than 5MB");
-      return;
-    }
-
-    this.setState({ isLoading: true });
-
-    try {
-      const uploadedFilename = this.file
-        ? (await s3Upload(this.file)).Location
-        : null;
-      await this.createNote({
-        content: this.state.content,
-        attachment: uploadedFilename
-      });
-      this.props.history.push("/");
-    } catch (e) {
-      console.log(e);
-      this.setState({ isLoading: false });
-    }
-  };
-
-  createNote(note) {
-    return invokeApig({
-      path: "/notes",
-      method: "POST",
-      body: note
-    });
   }
 
   render() {

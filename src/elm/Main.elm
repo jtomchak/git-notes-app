@@ -32,20 +32,6 @@ type Authenticated
     | Anonymous AnonymousRoute
 
 
-
--- logged userData requires to be there for the user state
--- type alias Model =
---     { notes : List Note
---     , isAuthenticated : Bool
---     , route : Route
---     , createNote : CreateNote
---     -- tag for each of the states
---     -- (authtenticated, Anonymous),
---     }
---Login {data : UserData, route : LoggedInRoute}
---Login : UserData -> LoggedInRoute -> Authenticated
-
-
 type alias Model =
     { authenticated : Authenticated
     , route : Route
@@ -77,12 +63,14 @@ type AnonymousRoute
 type LoggedInRoute
     = NotesPage
     | NewNotePage
+    | NotePage
     | NotFoundPage
 
 
 type Route
     = Home
     | NewNote
+    | Note
     | NotFound
 
 
@@ -249,6 +237,32 @@ view model =
 
                                 -- , Textarea.textarea
                                 --     [ Textarea.id "content", Textarea.onInput UpdateNoteContent, Textarea.value userData.createNote.content ]
+                                , Html.node "markdown-text"
+                                    [ Html.Attributes.property "markdownValue" <| Json.Encode.string userData.createNote.content
+                                    , Html.Events.on "markdownTextChange" <| Json.Decode.map UpdateNoteContent <| Json.Decode.at [ "target", "markdownValue" ] <| Json.Decode.string
+                                    ]
+                                    []
+                                ]
+                            , Form.group []
+                                [ Form.label [ for "file" ] [ text "Attachment" ]
+                                , input [ type_ "file", id "imageFileInput", on "change" (Json.Decode.succeed (SelectImageFile "imageFileInput")) ] []
+                                ]
+                            , Button.button [ Button.primary, Button.attrs [ onWithOptions "click" { stopPropagation = True, preventDefault = True } (Json.Decode.succeed (PostNote)) ] ] [ text "Create" ]
+                            ]
+                        , viewImagePreview userData.createNote.image
+                        ]
+
+                Anonymous _ ->
+                    renderLanding "Login to create a new note!"
+
+        Note ->
+            case model.authenticated of
+                Login ( userData, _ ) ->
+                    div []
+                        [ h1 [] [ text "Here is where Elm note is going!" ]
+                        , Form.form []
+                            [ Form.group []
+                                [ label [ for "content" ] []
                                 , Html.node "markdown-text"
                                     [ Html.Attributes.property "markdownValue" <| Json.Encode.string userData.createNote.content
                                     , Html.Events.on "markdownTextChange" <| Json.Decode.map UpdateNoteContent <| Json.Decode.at [ "target", "markdownValue" ] <| Json.Decode.string
