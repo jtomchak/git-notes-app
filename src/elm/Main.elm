@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Http
 import Date exposing (..)
-import UrlParser as Url exposing (Parser, (</>), (<?>), s, int, stringParam, top)
+import UrlParser as Url exposing (parsePath, Parser, (</>), (<?>), s, int, stringParam, top)
 import Navigation exposing (Location)
 import Note exposing (Note, Image, CreateNote)
 import Html exposing (Html, Attribute, text, div, h1, img, li, ul, p, label, input)
@@ -50,7 +50,7 @@ init flags =
     let
         model =
             { authenticated = Anonymous LandingPage
-            , route = Url.parsePath routeParser flags.location
+            , route = extractRoute flags.location
             }
     in
         model ! [ sendData (FetchNotes "/notes") ]
@@ -76,12 +76,26 @@ type Route
     | NotFound
 
 
-routeParser : Url.Parser (Route -> a) a
-routeParser =
+extractRoute : Location -> Route
+extractRoute location =
+    let
+        _ =
+            Debug.log "location" location
+    in
+        case (Url.parsePath matchRoute location) of
+            Just route ->
+                route
+
+            Nothing ->
+                NotFound
+
+
+matchRoute : Parser (Route -> a) a
+matchRoute =
     oneOf
         [ map Home Url.top
         , map NewNote (s "notes" </> s "new")
-        , map Note (s "notes" </> Url.int)
+        , map Note (s "notes" </> Json.Decode.int)
         ]
 
 
