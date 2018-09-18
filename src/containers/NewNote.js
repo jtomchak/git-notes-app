@@ -31,11 +31,7 @@ export default class NewNote extends Component {
   render() {
     return (
       <div className="NewNote">
-        <Elm
-          src={Main}
-          ports={initPorts(this.context)}
-          flags={{ route: this.props.match.url }}
-        />
+        <Elm src={Main} ports={initPorts(this.context)} />
       </div>
     );
   }

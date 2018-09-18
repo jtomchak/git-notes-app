@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Http
 import Date exposing (..)
-import UrlParser as Url exposing (parsePath, Parser, (</>), (<?>), s, int, stringParam, top)
+import UrlParser as Url exposing (parsePath, Parser, (</>), (<?>), s, int, stringParam, top, oneOf, map)
 import Navigation exposing (Location)
 import Note exposing (Note, Image, CreateNote)
 import Html exposing (Html, Attribute, text, div, h1, img, li, ul, p, label, input)
@@ -45,12 +45,12 @@ type alias Flags =
     }
 
 
-init : Flags -> ( Model, Cmd Msg )
-init flags =
+init : Location -> ( Model, Cmd Msg )
+init location =
     let
         model =
             { authenticated = Anonymous LandingPage
-            , route = extractRoute flags.location
+            , route = extractRoute location
             }
     in
         model ! [ sendData (FetchNotes "/notes") ]
@@ -92,10 +92,10 @@ extractRoute location =
 
 matchRoute : Parser (Route -> a) a
 matchRoute =
-    oneOf
-        [ map Home Url.top
-        , map NewNote (s "notes" </> s "new")
-        , map Note (s "notes" </> Json.Decode.int)
+    Url.oneOf
+        [ Url.map Home Url.top
+        , Url.map NewNote (s "notes" </> s "new")
+        , Url.map Note (s "notes" </> Url.int)
         ]
 
 
@@ -123,6 +123,7 @@ type Msg
     | SelectImageFile String
     | UpdateNoteContent String
     | PostNote
+    | UrlChange Location
 
 
 
@@ -208,6 +209,9 @@ update msg model =
 
                     Login ( userData, _ ) ->
                         model ! [ sendData (PostCreateNote userData.createNote) ]
+
+            UrlChange location ->
+                ( { model | route = extractRoute location }, Cmd.none )
 
 
 updateCreateNoteImage : Image -> CreateNote -> CreateNote
@@ -379,9 +383,9 @@ viewImagePreview image =
 ---- PROGRAM ----
 
 
-main : Program Flags Model Msg
+main : Program Never Model Msg
 main =
-    Html.programWithFlags
+    Navigation.program UrlChange
         { view = view
         , init = init
         , update = update
