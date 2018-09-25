@@ -78,16 +78,12 @@ type Route
 
 extractRoute : Location -> Route
 extractRoute location =
-    let
-        _ =
-            Debug.log "location" location
-    in
-        case (Url.parsePath matchRoute location) of
-            Just route ->
-                route
+    case (Url.parsePath matchRoute location) of
+        Just route ->
+            route
 
-            Nothing ->
-                NotFound
+        Nothing ->
+            NotFound
 
 
 matchRoute : Parser (Route -> a) a
@@ -164,6 +160,19 @@ update msg model =
                             Err fail ->
                                 ( model, Cmd.none )
 
+                    NotePayload note ->
+                        case note of
+                            Ok note ->
+                                case model.authenticated of
+                                    Anonymous _ ->
+                                        ( model, Cmd.none )
+
+                                    Login ( userData, _ ) ->
+                                        ( { model | authenticated = Login ( { userData | createNote = { content = note.content, image = Nothing } }, NotePage ) }, Cmd.none )
+
+                            Err fail ->
+                                ( model, Cmd.none )
+
                     FileReadImage file ->
                         case file of
                             Ok newImageFile ->
@@ -211,7 +220,12 @@ update msg model =
                         model ! [ sendData (PostCreateNote userData.createNote) ]
 
             UrlChange location ->
-                ( { model | route = extractRoute location }, Cmd.none )
+                case (extractRoute location) of
+                    Note noteId ->
+                        ( { model | route = extractRoute location }, sendData (FetchNoteById noteId) )
+
+                    _ ->
+                        ( { model | route = extractRoute location }, Cmd.none )
 
 
 updateCreateNoteImage : Image -> CreateNote -> CreateNote

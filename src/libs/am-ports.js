@@ -72,13 +72,21 @@ export const initPorts = context => ports => {
         break;
       case "CREATE_NEW_NOTE":
         const { noteContent, image } = msg.data;
-        console.log(msg.data);
         postNote(noteContent, image)
           .then(result => {
             context.router.history.push("/");
             console.log(result);
           })
           .catch(err => console.log(err));
+        break;
+      case "FETCH_NOTE_BY_ID":
+        console.log(msg.data);
+        invokeApig({ path: msg.data })
+          .then(results =>
+            sendData({ tag: "NOTE_RECIEVED_SUCCESS", data: results })
+          )
+          .catch(e => console.log(e));
+
         break;
       default:
         return null;
