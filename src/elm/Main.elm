@@ -76,6 +76,10 @@ type Route
     | NotFound
 
 
+
+-- parser instructions
+
+
 extractRoute : Location -> Route
 extractRoute location =
     case (Url.parsePath matchRoute location) of
@@ -84,6 +88,17 @@ extractRoute location =
 
         Nothing ->
             NotFound
+
+
+
+-- like writing a decoder
+-- path portion of a url
+-- prodecural set of rules to consume a section of the path
+-- run until something is produced
+-- we are building the parser here
+-- </> both sides of the slash have to succeed
+-- get it down to a 1 param function
+-- map takes a function from one place and upgrades it to another world
 
 
 matchRoute : Parser (Route -> a) a
