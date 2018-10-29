@@ -2,6 +2,8 @@ module Main exposing (..)
 
 import Http
 import Date exposing (..)
+import UrlParser as Url exposing (parsePath, Parser, (</>), (<?>), s, int, stringParam, top, oneOf, map)
+import Navigation exposing (Location, modifyUrl, newUrl)
 import Note exposing (Note, Image, CreateNote)
 import Html exposing (Html, Attribute, text, div, h1, img, li, ul, p, label, input)
 import Html.Events exposing (onClick, onWithOptions, on)
@@ -32,20 +34,6 @@ type Authenticated
     | Anonymous AnonymousRoute
 
 
-
--- logged userData requires to be there for the user state
--- type alias Model =
---     { notes : List Note
---     , isAuthenticated : Bool
---     , route : Route
---     , createNote : CreateNote
---     -- tag for each of the states
---     -- (authtenticated, Anonymous),
---     }
---Login {data : UserData, route : LoggedInRoute}
---Login : UserData -> LoggedInRoute -> Authenticated
-
-
 type alias Model =
     { authenticated : Authenticated
     , route : Route
@@ -53,16 +41,16 @@ type alias Model =
 
 
 type alias Flags =
-    { route : String
+    { location : Location
     }
 
 
-init : Flags -> ( Model, Cmd Msg )
-init flags =
+init : Location -> ( Model, Cmd Msg )
+init location =
     let
         model =
             { authenticated = Anonymous LandingPage
-            , route = urlToRoute flags.route
+            , route = extractRoute location
             }
     in
         model ! [ sendData (FetchNotes "/notes") ]
@@ -77,13 +65,49 @@ type AnonymousRoute
 type LoggedInRoute
     = NotesPage
     | NewNotePage
+    | NotePage
     | NotFoundPage
 
 
 type Route
     = Home
     | NewNote
+    | Note String
     | NotFound
+
+
+
+-- parser instructions
+
+
+extractRoute : Location -> Route
+extractRoute location =
+    case (Url.parsePath matchRoute location) of
+        Just route ->
+            route
+
+        Nothing ->
+            NotFound
+
+
+
+-- like writing a decoder
+-- path portion of a url
+-- prodecural set of rules to consume a section of the path
+-- run until something is produced
+-- we are building the parser here
+-- </> both sides of the slash have to succeed
+-- get it down to a 1 param function
+-- map takes a function from one place and upgrades it to another world
+
+
+matchRoute : Parser (Route -> a) a
+matchRoute =
+    Url.oneOf
+        [ Url.map Home Url.top
+        , Url.map NewNote (s "notes" </> s "new")
+        , Url.map Note (s "notes" </> Url.string)
+        ]
 
 
 urlToRoute : String -> Route
@@ -110,6 +134,7 @@ type Msg
     | SelectImageFile String
     | UpdateNoteContent String
     | PostNote
+    | UrlChange Location
 
 
 
@@ -150,6 +175,19 @@ update msg model =
                             Err fail ->
                                 ( model, Cmd.none )
 
+                    NotePayload note ->
+                        case note of
+                            Ok note ->
+                                case model.authenticated of
+                                    Anonymous _ ->
+                                        ( model, Cmd.none )
+
+                                    Login ( userData, _ ) ->
+                                        ( { model | authenticated = Login ( { userData | createNote = { content = note.content, image = Nothing } }, NotePage ) }, Cmd.none )
+
+                            Err fail ->
+                                ( model, Cmd.none )
+
                     FileReadImage file ->
                         case file of
                             Ok newImageFile ->
@@ -168,7 +206,7 @@ update msg model =
                                 ( model, Cmd.none )
 
             JSRedirectTo route ->
-                model ! [ sendData <| RedirectTo route ]
+                model ! [ newUrl route ]
 
             LogErr err ->
                 model ! [ sendData (LogError err) ]
@@ -195,6 +233,14 @@ update msg model =
 
                     Login ( userData, _ ) ->
                         model ! [ sendData (PostCreateNote userData.createNote) ]
+
+            UrlChange location ->
+                case (extractRoute location) of
+                    Note noteId ->
+                        ( { model | route = extractRoute location }, sendData (FetchNoteById noteId) )
+
+                    _ ->
+                        ( { model | route = extractRoute location }, Cmd.none )
 
 
 updateCreateNoteImage : Image -> CreateNote -> CreateNote
@@ -224,52 +270,79 @@ subscriptions _ =
 
 view : Model -> Html Msg
 view model =
-    case model.route of
-        -- case is model authenticated forcing pattern match
-        Home ->
-            case model.authenticated of
-                Login ( userData, _ ) ->
-                    div []
-                        [ h1 [] [ text "Our Elm App is working!" ]
-                        , Button.button [ Button.primary, Button.attrs [ onClick (JSRedirectTo "notes/new") ] ] [ text "New Note" ]
-                        , Listgroup.custom (renderNotes userData.notes)
-                        ]
-
-                Anonymous _ ->
-                    renderLanding "Welcome"
-
-        NewNote ->
-            case model.authenticated of
-                Login ( userData, _ ) ->
-                    div []
-                        [ h1 [] [ text "Here is where Elm note is going!" ]
-                        , Form.form []
-                            [ Form.group []
-                                [ label [ for "content" ] []
-
-                                -- , Textarea.textarea
-                                --     [ Textarea.id "content", Textarea.onInput UpdateNoteContent, Textarea.value userData.createNote.content ]
-                                , Html.node "markdown-text"
-                                    [ Html.Attributes.property "markdownValue" <| Json.Encode.string userData.createNote.content
-                                    , Html.Events.on "markdownTextChange" <| Json.Decode.map UpdateNoteContent <| Json.Decode.at [ "target", "markdownValue" ] <| Json.Decode.string
-                                    ]
-                                    []
-                                ]
-                            , Form.group []
-                                [ Form.label [ for "file" ] [ text "Attachment" ]
-                                , input [ type_ "file", id "imageFileInput", on "change" (Json.Decode.succeed (SelectImageFile "imageFileInput")) ] []
-                                ]
-                            , Button.button [ Button.primary, Button.attrs [ onWithOptions "click" { stopPropagation = True, preventDefault = True } (Json.Decode.succeed (PostNote)) ] ] [ text "Create" ]
+    let
+        _ =
+            Debug.log "view" model
+    in
+        case model.route of
+            -- case is model authenticated forcing pattern match
+            Home ->
+                case model.authenticated of
+                    Login ( userData, _ ) ->
+                        div []
+                            [ h1 [] [ text "Our Elm App is working!" ]
+                            , Button.button [ Button.primary, Button.attrs [ onClick (JSRedirectTo "notes/new") ] ] [ text "New Note" ]
+                            , Listgroup.custom (renderNotes userData.notes)
                             ]
-                        , viewImagePreview userData.createNote.image
-                        ]
 
-                Anonymous _ ->
-                    renderLanding "Login to create a new note!"
+                    Anonymous _ ->
+                        renderLanding "Welcome"
 
-        NotFound ->
-            div []
-                [ h1 [] [ text "Nothing here meow" ] ]
+            NewNote ->
+                case model.authenticated of
+                    Login ( userData, _ ) ->
+                        div []
+                            [ h1 [] [ text "Here is where Elm note is going!" ]
+                            , Form.form []
+                                [ Form.group []
+                                    [ label [ for "content" ] []
+                                    , Html.node "markdown-text"
+                                        [ Html.Attributes.property "markdownValue" <| Json.Encode.string userData.createNote.content
+                                        , Html.Events.on "markdownTextChange" <| Json.Decode.map UpdateNoteContent <| Json.Decode.at [ "target", "markdownValue" ] <| Json.Decode.string
+                                        ]
+                                        []
+                                    ]
+                                , Form.group []
+                                    [ Form.label [ for "file" ] [ text "Attachment" ]
+                                    , input [ type_ "file", id "imageFileInput", on "change" (Json.Decode.succeed (SelectImageFile "imageFileInput")) ] []
+                                    ]
+                                , Button.button [ Button.primary, Button.attrs [ onWithOptions "click" { stopPropagation = True, preventDefault = True } (Json.Decode.succeed (PostNote)) ] ] [ text "Create" ]
+                                ]
+                            , viewImagePreview userData.createNote.image
+                            ]
+
+                    Anonymous _ ->
+                        renderLanding "Login to create a new note!"
+
+            Note noteId ->
+                case model.authenticated of
+                    Login ( userData, _ ) ->
+                        div []
+                            [ h1 [] [ text "Here is where Elm note is going!" ]
+                            , Form.form []
+                                [ Form.group []
+                                    [ label [ for "content" ] []
+                                    , Html.node "markdown-text"
+                                        [ Html.Attributes.property "markdownValue" <| Json.Encode.string userData.createNote.content
+                                        , Html.Events.on "markdownTextChange" <| Json.Decode.map UpdateNoteContent <| Json.Decode.at [ "target", "markdownValue" ] <| Json.Decode.string
+                                        ]
+                                        []
+                                    ]
+                                , Form.group []
+                                    [ Form.label [ for "file" ] [ text "Attachment" ]
+                                    , input [ type_ "file", id "imageFileInput", on "change" (Json.Decode.succeed (SelectImageFile "imageFileInput")) ] []
+                                    ]
+                                , Button.button [ Button.primary, Button.attrs [ onWithOptions "click" { stopPropagation = True, preventDefault = True } (Json.Decode.succeed (PostNote)) ] ] [ text "Create" ]
+                                ]
+                            , viewImagePreview userData.createNote.image
+                            ]
+
+                    Anonymous _ ->
+                        renderLanding "Login to create a new note!"
+
+            NotFound ->
+                div []
+                    [ h1 [] [ text "Nothing here meow" ] ]
 
 
 
@@ -343,9 +416,9 @@ viewImagePreview image =
 ---- PROGRAM ----
 
 
-main : Program Flags Model Msg
+main : Program Never Model Msg
 main =
-    Html.programWithFlags
+    Navigation.program UrlChange
         { view = view
         , init = init
         , update = update

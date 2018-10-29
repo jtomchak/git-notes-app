@@ -2,6 +2,14 @@ import React, { Component } from "react";
 import { FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 import LoaderButton from "../components/LoaderButton";
 import { invokeApig, s3Upload } from "../libs/awsLib";
+
+//--> Required for Elm Render
+import PropTypes from "prop-types";
+import Elm from "../libs/react-elm-components";
+import { sendData, initPorts } from "../libs/am-ports";
+import { Main } from "../elm/Main";
+//<--- End of Elm Requirements
+
 import config from "../config";
 import "./Notes.css";
 
@@ -120,57 +128,13 @@ export default class Notes extends Component {
   render() {
     return (
       <div className="Notes">
-        {this.state.note && (
-          <form onSubmit={this.handleSubmit}>
-            <FormGroup controlId="content">
-              <FormControl
-                onChange={this.handleChange}
-                value={this.state.content}
-                componentClass="textarea"
-              />
-            </FormGroup>
-            {this.state.note.attachment && (
-              <FormGroup>
-                <ControlLabel>Attachment</ControlLabel>
-                <FormControl.Static>
-                  <a
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    href={this.state.note.attachment}
-                  >
-                    {this.formatFilename(this.state.note.attachment)}
-                  </a>
-                </FormControl.Static>
-              </FormGroup>
-            )}
-            <FormGroup controlId="file">
-              {!this.state.note.attachment && (
-                <ControlLabel>Attachment</ControlLabel>
-              )}
-              <FormControl onChange={this.handleFileChange} type="file" />
-            </FormGroup>
-            <LoaderButton
-              block
-              bsStyle="primary"
-              bsSize="large"
-              disabled={!this.validateForm()}
-              type="submit"
-              isLoading={this.state.isLoading}
-              text="Save"
-              loadingText="Saving…"
-            />
-            <LoaderButton
-              block
-              bsStyle="danger"
-              bsSize="large"
-              isLoading={this.state.isDeleting}
-              onClick={this.handleDelete}
-              text="Delete"
-              loadingText="Deleting…"
-            />
-          </form>
-        )}
+        <Elm src={Main} ports={initPorts(this.context)} />
       </div>
     );
   }
 }
+
+//required to pass context.router as props to Elm
+Notes.contextTypes = {
+  router: PropTypes.object.isRequired
+};

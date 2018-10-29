@@ -23,11 +23,7 @@ export default class Home extends Component {
   render() {
     return (
       <div className="Home">
-        <Elm
-          src={Main}
-          ports={initPorts(this.context)}
-          flags={{ route: this.props.match.url }}
-        />
+        <Elm src={Main} ports={initPorts(this.context)} />
       </div>
     );
   }
