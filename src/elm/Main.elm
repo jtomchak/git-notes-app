@@ -6,11 +6,12 @@ import UrlParser as Url exposing (parsePath, Parser, (</>), (<?>), s, int, strin
 import Navigation exposing (Location, modifyUrl, newUrl)
 import Note exposing (Note, Image, CreateNote)
 import Html exposing (Html, Attribute, text, div, h1, img, li, ul, p, label, input)
-import Html.Events exposing (onClick, onWithOptions, on)
-import Html.Attributes exposing (src, class, for, type_, id, title, attribute)
+import Html.Events exposing (onClick, onWithOptions, on, onInput)
+import Html.Attributes exposing (src, class, for, type_, id, title, attribute, value)
 import Bootstrap.ListGroup as Listgroup
 import Bootstrap.Form as Form
 import Bootstrap.Button as Button
+import Bootstrap.Form.Input as Input
 import Json.Decode exposing (..)
 import Json.Encode exposing (string)
 import JSInterop exposing (..)
@@ -29,9 +30,15 @@ type alias UserData =
     }
 
 
+type alias User =
+    { email : String
+    , password : String
+    }
+
+
 type Authenticated
     = Login ( UserData, LoggedInRoute )
-    | Anonymous AnonymousRoute
+    | Anonymous ( User, AnonymousRoute )
 
 
 type alias Model =
@@ -49,7 +56,7 @@ init : Location -> ( Model, Cmd Msg )
 init location =
     let
         model =
-            { authenticated = Anonymous LandingPage
+            { authenticated = Anonymous ( { email = "", password = "" }, LandingPage )
             , route = extractRoute location
             }
     in
@@ -71,6 +78,7 @@ type LoggedInRoute
 
 type Route
     = Home
+    | LoginRoute
     | NewNote
     | Note String
     | NotFound
@@ -105,6 +113,7 @@ matchRoute : Parser (Route -> a) a
 matchRoute =
     Url.oneOf
         [ Url.map Home Url.top
+        , Url.map LoginRoute (s "login")
         , Url.map NewNote (s "notes" </> s "new")
         , Url.map Note (s "notes" </> Url.string)
         ]
@@ -135,6 +144,8 @@ type Msg
     | UpdateNoteContent String
     | PostNote
     | UrlChange Location
+    | UpdateEmail String
+    | UpdatePassword String
 
 
 
@@ -154,7 +165,7 @@ update msg model =
                     UpdateAuth isAuth ->
                         case isAuth of
                             Ok False ->
-                                ( { model | authenticated = Anonymous LandingPage }, Cmd.none )
+                                ( { model | authenticated = Anonymous ( { email = "", password = "" }, LandingPage ) }, Cmd.none )
 
                             Ok True ->
                                 ( { model | authenticated = Login ( { notes = [], createNote = { content = "", image = Nothing } }, NotesPage ) }, Cmd.none )
@@ -166,7 +177,7 @@ update msg model =
                         case notes of
                             Ok notes ->
                                 case model.authenticated of
-                                    Anonymous _ ->
+                                    Anonymous ( _, _ ) ->
                                         ( model, Cmd.none )
 
                                     Login ( userData, _ ) ->
@@ -179,7 +190,7 @@ update msg model =
                         case note of
                             Ok note ->
                                 case model.authenticated of
-                                    Anonymous _ ->
+                                    Anonymous ( _, _ ) ->
                                         ( model, Cmd.none )
 
                                     Login ( userData, _ ) ->
@@ -192,7 +203,7 @@ update msg model =
                         case file of
                             Ok newImageFile ->
                                 case model.authenticated of
-                                    Anonymous _ ->
+                                    Anonymous ( _, _ ) ->
                                         ( model, Cmd.none )
 
                                     Login ( userData, _ ) ->
@@ -216,7 +227,7 @@ update msg model =
 
             UpdateNoteContent content ->
                 case model.authenticated of
-                    Anonymous _ ->
+                    Anonymous ( _, _ ) ->
                         ( model, Cmd.none )
 
                     Login ( userData, _ ) ->
@@ -226,9 +237,25 @@ update msg model =
                         in
                             ( { model | authenticated = Login ( { userData | createNote = updateNewNote }, NewNotePage ) }, Cmd.none )
 
+            UpdateEmail input ->
+                case model.authenticated of
+                    Anonymous ( user, _ ) ->
+                        ( { model | authenticated = Anonymous ( { user | email = input }, LoginPage ) }, Cmd.none )
+
+                    Login ( userData, _ ) ->
+                        ( model, Cmd.none )
+
+            UpdatePassword input ->
+                case model.authenticated of
+                    Anonymous ( user, _ ) ->
+                        ( { model | authenticated = Anonymous ( { user | password = input }, LoginPage ) }, Cmd.none )
+
+                    Login ( userData, _ ) ->
+                        ( model, Cmd.none )
+
             PostNote ->
                 case model.authenticated of
-                    Anonymous _ ->
+                    Anonymous ( _, _ ) ->
                         ( model, Cmd.none )
 
                     Login ( userData, _ ) ->
@@ -339,6 +366,29 @@ view model =
 
                     Anonymous _ ->
                         renderLanding "Login to create a new note!"
+
+            LoginRoute ->
+                case model.authenticated of
+                    Login ( userData, _ ) ->
+                        div []
+                            [ h1 [] [ text "Logged In" ] ]
+
+                    Anonymous ( user, _ ) ->
+                        div [ class "Login" ]
+                            [ h1 [] [ text "Login" ]
+                            , Form.form []
+                                [ Form.group []
+                                    [ Form.label [ for "myemail" ] [ text "Email address" ]
+                                    , Input.email [ Input.value user.email, Input.onInput UpdateEmail ]
+                                    , Form.help [] [ text "We'll never share your email with anyone else." ]
+                                    ]
+                                , Form.group []
+                                    [ Form.label [ for "mypwd" ] [ text "Password" ]
+                                    , Input.password [ Input.value user.password, Input.onInput UpdatePassword ]
+                                    ]
+                                ]
+                            , Button.button [ Button.primary ] [ text "Submit" ]
+                            ]
 
             NotFound ->
                 div []
