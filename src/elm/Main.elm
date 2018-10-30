@@ -375,9 +375,9 @@ view model =
 
                     Anonymous ( user, _ ) ->
                         div [ class "Login" ]
-                            [ h1 [] [ text "Login" ]
-                            , Form.form []
-                                [ Form.group []
+                            [ Form.form []
+                                [ h1 [] [text "Login" ]
+                                , Form.group []
                                     [ Form.label [ for "myemail" ] [ text "Email address" ]
                                     , Input.email [ Input.value user.email, Input.onInput UpdateEmail ]
                                     , Form.help [] [ text "We'll never share your email with anyone else." ]
@@ -386,8 +386,8 @@ view model =
                                     [ Form.label [ for "mypwd" ] [ text "Password" ]
                                     , Input.password [ Input.value user.password, Input.onInput UpdatePassword ]
                                     ]
-                                ]
                             , Button.button [ Button.primary ] [ text "Submit" ]
+                                ]
                             ]
 
             NotFound ->
